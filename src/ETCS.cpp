@@ -9,4 +9,8 @@ void init() {
 	else detail::globalWorld = new World();
 }
 
+void quit() {
+	if (detail::globalWorld) delete detail::globalWorld;
+}
+
 } // namespace etcs

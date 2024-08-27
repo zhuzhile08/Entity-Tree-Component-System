@@ -23,6 +23,8 @@ namespace etcs {
 
 void init();
 
+void quit();
+
 
 [[nodiscard]] inline auto insertEntity(string_view_t name = "") {
 	return detail::globalWorld->insertEntity(name);
