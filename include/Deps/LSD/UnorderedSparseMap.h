@@ -9,11 +9,10 @@
  * @copyright Copyright (c) 2024
  *************************/
 
-#pragma once
 
-#ifndef USE_STANDARD_LIBRARY
-static_assert(false, "Cannot use replacement headers when the LSD library is available!");
-#endif
+#ifdef USE_STANDARD_LIBRARY
+
+#pragma once
 
 #include "Utility.h"
 
@@ -378,7 +377,7 @@ public:
 	}
 	constexpr iterator erase(const_iterator first, const_iterator last) noexcept {
 		for (auto it = first; it != last; it++) erase(it);
-		return &*first;
+		return m_array.begin() + (m_array.end() - first);
 	}
 	constexpr size_type erase(const key_type& key) noexcept {
 		auto it = find(key);
@@ -598,3 +597,5 @@ private:
 };
 
 } // namespace lsd
+
+#endif

@@ -9,11 +9,9 @@
  * @copyright Copyright (c) 2022
  *************************/
 
-#pragma once
+#ifdef USE_STANDARD_LIBRARY
 
-#ifndef USE_STANDARD_LIBRARY
-static_assert(false, "Cannot use replacement headers when the LSD library is available!");
-#endif
+#pragma once
 
 #include <utility>
 
@@ -72,6 +70,16 @@ template <class Integer> inline constexpr Integer sizeToIndex(Integer size) noex
 } // namespace detail
 
 
+// implicit cast
+
+template <class Ty> [[nodiscard]] constexpr inline Ty implicitCast(std::type_identity_t<Ty> arg) noexcept(std::is_nothrow_constructible_v<Ty>) {
+	return arg;
+}
+template <class Ty> [[deprecated]] [[nodiscard]] constexpr inline Ty implicit_cast(std::type_identity_t<Ty> arg) noexcept(std::is_nothrow_constructible_v<Ty>) {
+	return arg;
+}
+
+
 // compile time type id generator
 
 using type_id = const void*;
@@ -102,3 +110,5 @@ template <class Ty> struct IsIterator<Ty, std::void_t<
 template <class Ty> inline constexpr bool isIteratorValue = IsIterator<Ty>::value;
 
 } // namespace lsd
+
+#endif
