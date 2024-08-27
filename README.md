@@ -40,10 +40,10 @@ int main() {
         auto e = root.insertChild(std::to_string(i)); // use lsd::toString if you have it as a dependency
         
         if (i % 1 == 0) e.insertComponent<Position>(
-			Position { static_cast<double>(i), static_cast<double>(i) / 2}
+		    Position { static_cast<double>(i), static_cast<double>(i) / 2}
 		);
         if (i % 2 == 0) e.insertComponent<Velocity>(
-			Velocity { static_cast<double>(i * i), static_cast<double>(i) / 3}
+		    Velocity { static_cast<double>(i * i), static_cast<double>(i) / 3}
 		);
         if (i % 3 == 0) e.disable();
     }
