@@ -222,17 +222,23 @@ public:
 		return m_edges[lsd::typeId<Ty>()];
 	}
 
-	template <class... Types, class Callable> void each(Callable&& system) {
+	template <class EntityType, class... Types, class Callable> void each(World* world, Callable&& system) {
 		for (auto& edge : m_edges) {
 			auto superset = edge.second.superset;
-			if (superset) superset->each<Types...>(system);
+			if (superset) superset->each<EntityType, Types...>(world, system);
 		}
 
-		auto iterators = std::make_tuple((m_components.at(
-			lsd::typeId<std::remove_cv_t<std::remove_reference_t<Types>>>()
-		).template begin<Types>())...);
+		auto iterators = std::make_tuple((m_components.at(lsd::typeId<std::remove_cv_t<std::remove_reference_t<Types>>>()).template begin<Types>())...);
 
-		for (auto i = m_entities.size(); i > 0; i--) system((*std::get<Types*>(iterators)++)...);
+		if constexpr (std::is_invocable_v<Callable, EntityType, Types...>) {
+			for (auto id : m_entities) {
+				auto e = EntityType(id, world);
+				if (e.active()) system(e, (*std::get<Types*>(iterators)++)...);
+			}
+		} else {
+			for (auto id : m_entities)
+				if (EntityType(id, world).active()) system((*std::get<Types*>(iterators)++)...);
+		}
 	}
 
 private:
@@ -302,7 +308,7 @@ public:
 		m_archetypes.emplace(archetype::create()); 
 	}
 
-	template <class Ty> Archetype* addOrFindSuperset(Archetype* baseArchetype) {
+	template <class Ty> [[nodiscard]] Archetype* addOrFindSuperset(Archetype* baseArchetype) {
 		auto& edge = baseArchetype->template edge<Ty>();
 		auto archetype = edge.superset;
 
@@ -320,7 +326,7 @@ public:
 
 		return archetype;
 	}
-	template <class Ty> Archetype* addOrFindSubset(Archetype* baseArchetype) {
+	template <class Ty> [[nodiscard]] Archetype* addOrFindSubset(Archetype* baseArchetype) {
 		auto& edge = baseArchetype->template edge<Ty>();
 		auto archetype = edge.subset;
 
@@ -339,13 +345,14 @@ public:
 		return archetype;
 	}
 
-	Archetype* systemArchetype(object_id systemId);
+	[[nodiscard]] Archetype* systemArchetype(object_id systemId);
 
 private:
 	archetypes m_archetypes;
 	World* m_world;
 
 	friend class EntityManager;
+	template <class...> friend class ::etcs::System;
 };
 
 } // namespace detail

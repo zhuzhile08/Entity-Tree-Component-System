@@ -28,7 +28,7 @@ public:
 	System& operator=(System&&) = default;
 
 	template <class Callable> void each(Callable&& callable) {
-		if (auto archetype = m_archetypes->systemArchetype(m_id); archetype) archetype->template each<Types...>(std::forward<Callable>(callable));
+		if (auto archetype = m_archetypes->systemArchetype(m_id); archetype) archetype->template each<Entity, Types...>(m_archetypes->m_world, std::forward<Callable>(callable));
 	}
 
 	[[nodiscard]] object_id id() const noexcept {

@@ -81,6 +81,15 @@ Entity& Entity::rename(string_view_t name) {
 	return *this;
 }
 
+Entity& Entity::enable() {
+	m_world->entityData(m_id)->m_active = true;
+	return *this;
+}
+Entity& Entity::disable() {
+	m_world->entityData(m_id)->m_active = false;
+	return *this;
+}
+
 Entity::iterator Entity::find(string_view_t name) { 
 	return m_world->entityData(m_id)->m_children.find(name); 
 }
@@ -120,6 +129,9 @@ Entity Entity::operator[](string_view_t name) const {
 
 bool Entity::alive() const {
 	return m_world->containsEntity(m_id);
+}
+bool Entity::active() const {
+	return m_world->entityData(m_id)->m_active;
 }
 
 bool Entity::hasComponents() const { 

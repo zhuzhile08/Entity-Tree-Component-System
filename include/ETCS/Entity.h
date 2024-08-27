@@ -75,6 +75,9 @@ public:
 	Entity& clearChildren();
 
 	Entity& rename(string_view_t name);
+	
+	Entity& enable();
+	Entity& disable();
 
 	iterator find(string_view_t name);
 	const_iterator find(string_view_t name) const;
@@ -97,6 +100,7 @@ public:
 	[[nodiscard]] Entity operator[](string_view_t name) const;
 
 	[[nodiscard]] bool alive() const;
+	[[nodiscard]] bool active() const;
 
 	[[nodiscard]] bool hasComponents() const;
 	[[nodiscard]] bool hasChildren() const;
@@ -107,6 +111,12 @@ public:
 	[[nodiscard]] constexpr object_id id() const noexcept { 
 		return m_id;
 	}
+	[[nodiscard]] constexpr World* world() const noexcept {
+		return m_world;
+	}
+	[[nodiscard]] constexpr const World* world() noexcept {
+		return m_world;
+	}
 
 private:
 	object_id m_id;
@@ -115,6 +125,7 @@ private:
 	constexpr Entity(object_id id, World* world = detail::globalWorld) : m_id(id), m_world(world) { }
 
 	friend class World;
+	friend class detail::Archetype;
 };
 
 } // namespace etcs

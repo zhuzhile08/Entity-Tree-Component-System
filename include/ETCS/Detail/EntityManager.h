@@ -35,7 +35,7 @@ private:
 	string_t m_name;
 	lsd::UnorderedSparseSet<EntityView, EVHasher, EVEqual> m_children { };
 
-	// bool m_active;
+	bool m_active = true;
 
 	friend class EntityManager;
 	friend class ::etcs::Entity;
