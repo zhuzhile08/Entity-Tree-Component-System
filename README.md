@@ -54,7 +54,7 @@ int main() {
         p.x += v.x;
         p.y += v.y;
 
-        std::printf("Hello, Entity %s!\n", e.name().data());
+        std::printf("Hello, Entity number %s at position (%.0f, %.0f)!\n", e.name().data(), p.x, p.y);
     });
 
     etcs::quit();
