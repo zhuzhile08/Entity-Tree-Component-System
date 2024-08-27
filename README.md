@@ -69,6 +69,8 @@ This project was designed to be used with CMake. Other build systems have not be
 
 Adding the Library as a CMake dependency defines the targets `ETCS::ETCS-<build_type>` and `ETCS::Headers`, which you can link to your project.
 
+You can set the build type by configuring the option `ETCS_STATIC`
+
 ### Optional dependencies and extensions
 
 ETCS was designed to be used with the [Lyra-Standard-Library](https://github.com/zhuzhile08/Lyra-Standard-Library), although it can be used without it, since the required structures have been seperatly implemented using the standard library. You can include LSD in your base project and add it as a CMake depdendency **before** adding ETCS so that it can be found.
