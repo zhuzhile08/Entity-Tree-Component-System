@@ -3,14 +3,25 @@ set(CMAKE_CXX_STANDARD 23)
 
 project(EntityTreeComponentSystem VERSION 1.0.0)
 
+option(ETCS_STATIC "Build ETCS statically" ON)
 
-option(BUILD_STATIC "Build ETCS statically" ON)
-
-
+# Check if LSD is available and if the simplified versions of the unordered sparse set have to be used
 if(NOT TARGET LyraStandardLibrary)
 	message(WARNING "Please add the Lyra Standard Library as a dependency!")
-	set(PRIVATE USE_STANDARD_LIBRARY)
+	add_compile_definitions(USE_STANDARD_LIBRARY)
 	include_directories(PRIVATE "${CMAKE_SOURCE_DIR}/include/Deps/")
+endif()
+
+
+option (ETCS_ENABLE_COMPONENTS_EXT "Use the already implemented components as an extension" OFF)
+
+# Check if the components extension in the ETCS/Components folder can be enabled, i.e. if GLM exists
+if(ETCS_ENABLE_COMPONENTS_EXT)
+	if(TARGET glm::glm)
+		add_compile_definitions(USE_COMPONENTS_EXT)
+	else()
+		message(FATAL_ERROR "The components extension cannot be enabled because glm wasn't found as a dependency!")
+	endif()
 endif()
 
 
@@ -29,9 +40,12 @@ set (ETCS_PRECOMPILED_HEADERS
 )
 
 set (ETCS_SOURCE_FILES
-	"src/ECS.cpp"
+	"src/ETCS.cpp"
+	"src/World.cpp"
+	"src/Entity.cpp"
 	"src/Detail/Archetype.cpp"
-	"src/Detail/Managers.cpp"
+	"src/Detail/EntityManager.cpp"
+	"src/Detail/SystemManager.cpp"
 )
 
 if(BUILD_STATIC)
@@ -46,7 +60,10 @@ if(BUILD_STATIC)
 	
 	
 	if(TARGET LyraStandardLibrary)
-		target_link_libraries(EntityTreeComponentSystem-static PRIVATE LyraStandardLibrary::Headers)
+		target_link_libraries(EntityTreeComponentSystem-static PRIVATE 
+			LyraStandardLibrary::Headers
+			glm::glm
+		)
 	endif()
 
 	target_precompile_headers(EntityTreeComponentSystem-static PUBLIC "${ETCS_PRECOMPILED_HEADERS}")
@@ -62,13 +79,17 @@ else()
 	
 	
 	if(TARGET LyraStandardLibrary)
-		target_link_libraries(EntityTreeComponentSystem-shared PRIVATE LyraStandardLibrary::Headers)
+		target_link_libraries(EntityTreeComponentSystem-shared PRIVATE 
+			LyraStandardLibrary::Headers 
+			glm::glm
+		)
 	endif()
 
 	target_precompile_headers(EntityTreeComponentSystem-shared PUBLIC "${ETCS_PRECOMPILED_HEADERS}")
 endif()
 
 
+# Register headers as a target
 add_library(EntityTreeComponenetSystem_Headers INTERFACE)
 add_library(ETCS::Headers ALIAS EntityTreeComponenetSystem_Headers)
 target_include_directories(EntityTreeComponenetSystem_Headers INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
