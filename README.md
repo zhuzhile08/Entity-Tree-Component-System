@@ -22,38 +22,38 @@ ETCS is still quite basic right now, so it doesn't support more advanced feature
 
 struct Position {
 public:
-	double x = { }, y = { };
+    double x = { }, y = { };
 };
 
 struct Velocity {
 public:
-	double x = { }, y = { };
+    double x = { }, y = { };
 };
 
 int main() {
-	etcs::init();
+    etcs::init();
 
-	auto root = etcs::insertEntity();
-
-
-	for (etcs::object_id i = 0; i < 1024; i++) {
-		auto e = root.insertChild(std::to_string(i)); // use lsd::toString if you have it as a dependency
-		
-		if (i % 1 == 0) e.insertComponent<Position>(Position { static_cast<double>(i), static_cast<double>(i) / 2});
-		if (i % 2 == 0) e.insertComponent<Velocity>(Velocity { static_cast<double>(i * i), static_cast<double>(i) / 3});
-		if (i % 3 == 0) e.disable();
-	}
+    auto root = etcs::insertEntity();
 
 
-	auto system = etcs::insertSystem<const Velocity, Position>();
-	system.each([](etcs::Entity e, const Velocity& v, Position p){
-		p.x += v.x;
-		p.y += v.y;
+    for (etcs::object_id i = 0; i < 1024; i++) {
+        auto e = root.insertChild(std::to_string(i)); // use lsd::toString if you have it as a dependency
+        
+        if (i % 1 == 0) e.insertComponent<Position>(Position { static_cast<double>(i), static_cast<double>(i) / 2});
+        if (i % 2 == 0) e.insertComponent<Velocity>(Velocity { static_cast<double>(i * i), static_cast<double>(i) / 3});
+        if (i % 3 == 0) e.disable();
+    }
 
-		std::printf("Hello, Entity %s!\n", e.name().data());
-	});
 
-	etcs::quit();
+    auto system = etcs::insertSystem<const Velocity, Position>();
+    system.each([](etcs::Entity e, const Velocity& v, Position p){
+        p.x += v.x;
+        p.y += v.y;
+
+        std::printf("Hello, Entity %s!\n", e.name().data());
+    });
+
+    etcs::quit();
 }
 ```
 
