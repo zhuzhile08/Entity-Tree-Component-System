@@ -18,10 +18,14 @@ option (ETCS_ENABLE_COMPONENTS_EXT "Use the already implemented components as an
 # Check if the components extension in the ETCS/Components folder can be enabled, i.e. if GLM exists
 if(ETCS_ENABLE_COMPONENTS_EXT)
 	if(TARGET glm::glm)
+		set(ETCS_LINKED_LIBRARIES LyraStandardLibrary::Headers glm::glm)
+
 		add_compile_definitions(USE_COMPONENTS_EXT)
 	else()
 		message(FATAL_ERROR "The components extension cannot be enabled because glm wasn't found as a dependency!")
 	endif()
+else()
+	set(ETCS_LINKED_LIBRARIES LyraStandardLibrary::Headers )
 endif()
 
 
@@ -60,10 +64,7 @@ if(BUILD_STATIC)
 	
 	
 	if(TARGET LyraStandardLibrary)
-		target_link_libraries(EntityTreeComponentSystem-static PRIVATE 
-			LyraStandardLibrary::Headers
-			glm::glm
-		)
+		target_link_libraries(EntityTreeComponentSystem-static PRIVATE "${ETCS_LINKED_LIBRARIES}")
 	endif()
 
 	target_precompile_headers(EntityTreeComponentSystem-static PUBLIC "${ETCS_PRECOMPILED_HEADERS}")
@@ -79,10 +80,7 @@ else()
 	
 	
 	if(TARGET LyraStandardLibrary)
-		target_link_libraries(EntityTreeComponentSystem-shared PRIVATE 
-			LyraStandardLibrary::Headers 
-			glm::glm
-		)
+		target_link_libraries(EntityTreeComponentSystem-static PRIVATE "${ETCS_LINKED_LIBRARIES}")
 	endif()
 
 	target_precompile_headers(EntityTreeComponentSystem-shared PUBLIC "${ETCS_PRECOMPILED_HEADERS}")
