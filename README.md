@@ -1,6 +1,6 @@
 # Entity-Tree-Component-System
 
-ETCS (Entity-Tree-Component-System) is a small, simple and fast-ish Archetype-ECS for `C++2a`.
+ETCS (Entity-Tree-Component-System) is a small, simple and fast-ish Archetype-ECS for >= `C++23`.
 
 ## Introduction
 
