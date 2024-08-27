@@ -11,23 +11,24 @@
 
 #pragma once
 
-#include "Detail/Core.h"
+#define GLM_ENABLE_EXPERIMENTAL
 
-#include "Entity.h"
-#include "ECS.h"
+#include "../Detail/Core.h"
+
+#include "../Entity.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include <Math/etcsMath.h"
+//#include <Math/etcsMath.h"
 
 namespace etcs {
 
 class Transform : public BasicComponent {
 public:
-	GLM_CONSTEXPR Transform(
+	Transform(
 		const glm::vec3& translation = glm::vec3(0.0f), 
 		const glm::quat& orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f), 
 		const glm::vec3& scale = glm::vec3(1.0f)
@@ -35,11 +36,11 @@ public:
 	Transform(
 		const glm::vec3& translation,
 		const glm::vec3& axis,
-		float32 angle,
+		float angle,
 		const glm::vec3& scale
 	) : translation(translation), orientation(glm::rotate(orientation, angle, axis)), scale(scale), m_dirty(true) { }
 	
-	void rotate(const glm::vec3& axis, float32 angle) {
+	void rotate(const glm::vec3& axis, float angle) {
 		orientation = glm::rotate(orientation, angle, axis);
 		m_dirty = true;
 	}
@@ -47,7 +48,7 @@ public:
 		orientation = orientation * glm::quat(euler);
 		m_dirty = true;
 	}
-	void setOrientation(const glm::vec3& axis, float32 angle) {
+	void setOrientation(const glm::vec3& axis, float angle) {
 		orientation = glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), angle, axis);
 		m_dirty = true;
 	}
@@ -55,7 +56,7 @@ public:
 		orientation = glm::quat(euler);
 		m_dirty = true;
 	}
-	void normalizeAndRotate(const glm::vec3& axis, float32 angle) {
+	void normalizeAndRotate(const glm::vec3& axis, float angle) {
 		orientation = glm::rotate(orientation, angle, glm::normalize(axis));
 		m_dirty = true;
 	}
@@ -64,7 +65,7 @@ public:
 		m_dirty = true;
 		
 		glm::vec3 direction = translation - target;
-		float32 length = glm::length(direction);
+		float length = glm::length(direction);
 		
 		if (length < 0.0001) return;
 		
@@ -99,7 +100,8 @@ public:
 		return glm::eulerAngles(orientation);
 	}
 	[[nodiscard]] glm::quat globalOrientation() const {
-		return orientation * ((entity->parent()) ? entity->parent()->component<Transform>().orientation : glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+		auto parent = entity->parent();
+		return orientation * (parent.alive() ? parent.component<Transform>().orientation : glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 	}
 	[[nodiscard]] glm::vec3 globalRotation() const {
 		return glm::eulerAngles(globalOrientation());
@@ -107,15 +109,16 @@ public:
 	[[nodiscard]] glm::vec3 globalTranslation() const {
 		auto parent = entity->parent();
 
-		if (parent) {
-			auto& parentTransform = parent->component<Transform>();
+		if (parent.alive()) {
+			auto& parentTransform = parent.component<Transform>();
 			return glm::rotate(parentTransform.orientation, translation) + parentTransform.globalTranslation();
 		} else {
 			return glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), translation);
 		}
 	}
 	[[nodiscard]] glm::vec3 globalScale() const {
-		return orientation * ((entity->parent()) ? entity->parent()->component<Transform>().scale : glm::vec3(0.0f));
+		auto parent = entity->parent();
+		return orientation * (parent.alive() ? parent.component<Transform>().scale : glm::vec3(0.0f));
 	}
 
 	[[nodiscard]] GLM_CONSTEXPR glm::mat4 localTransform() {
@@ -126,7 +129,8 @@ public:
 		return m_localTransform;
 	}
 	[[nodiscard]] GLM_CONSTEXPR glm::mat4 globalTransform() {
-		return localTransform() * ((entity->parent()) ? entity->parent()->component<Transform>().globalTransform() : glm::mat4(1.0f));
+		auto parent = entity->parent();
+		return localTransform() * (parent.alive() ? parent.component<Transform>().globalTransform() : glm::mat4(1.0f));
 	}
 
 	glm::vec3 translation;

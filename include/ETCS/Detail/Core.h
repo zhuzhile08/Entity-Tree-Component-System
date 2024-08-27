@@ -67,6 +67,8 @@ using object_id = std::uint64_t;
 
 #ifdef USE_STANDARD_LIBRARY
 
+template <class Ty> using hash_t = std::hash<Ty>;
+
 template <class Ty, class Deleter = std::default_delete<Ty>> using unique_ptr_t = std::unique_ptr<class Ty, class Deleter>;
 
 template <class Ty, class... Args> using function_t = std::function<Ty(Args...)>;
@@ -77,6 +79,8 @@ template <class CharTy, class Traits = std::char_traits<CharTy>, class Alloc = s
 template <class CharTy, class Traits = std::char_traits<CharTy>> using basic_string_view_t = std::basic_string_view<CharTy, Alloc>;
 
 #else
+
+template <class Ty> using hash_t = lsd::Hash<Ty>;
 
 template <class Ty, class Deleter = lsd::DefaultDelete<Ty>> using unique_ptr_t = lsd::UniquePointer<Ty, Deleter>;
 
@@ -97,16 +101,44 @@ using string_view_t = basic_string_view_t<char>;
 
 class Entity;
 class BasicSystem;
+template <class...> class System;
+class World;
+
+#ifdef USE_COMPONENTS_EXT
+
+class Transform;
+
+#endif
 
 namespace detail {
 
+class Archetype;
+class ArchetypeManager;
 class EntityManager;
 class SystemManager;
-class Archetype;
-class World;
+
+extern World* globalWorld;
 
 } // namespace detail
 
-class Transform;
+
+// utility
+
+inline static constexpr auto nullId = std::numeric_limits<object_id>::max();
+
+namespace detail {
+
+// entity view
+struct EntityView {
+	object_id id = nullId;
+	string_view_t name = { };
+};
+
+// custom hashers and equal functions
+
+CUSTOM_HASHER(EVHasher, const EntityView&, string_view_t, hash_t<string_view_t>{}, .name)
+CUSTOM_EQUAL(EVEqual, const EntityView&, string_view_t, .name)
+
+} // namespace detail
 
 } // namespace etcs

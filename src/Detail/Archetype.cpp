@@ -1,5 +1,7 @@
 #include "../../include/ETCS/Detail/Archetype.h"
 
+#include "../../include/ETCS/World.h"
+
 namespace etcs {
 
 namespace detail {
@@ -39,8 +41,16 @@ void Archetype::eraseEntity(object_id entityId) {
 		auto index = (it - m_entities.begin()); // not possible with std::unordered_map
 		m_entities.erase(it);
 
-		for (auto& component : m_components) component.second.removeComponent(index);
+		for (auto& component : m_components) component.second.eraseComponent(index);
 	} else throw std::out_of_range("etcs::EnitityComponentSystem::Archetype::eraseEntity(): Tried to erase entity with nonexistant ID!");
+}
+
+
+Archetype* ArchetypeManager::systemArchetype(object_id systemId) {
+	auto archetype = m_archetypes.find(m_world->m_systems.hash(systemId));
+
+	if (archetype != m_archetypes.end()) return archetype->get();
+	else return nullptr;
 }
 
 } // namespace detail

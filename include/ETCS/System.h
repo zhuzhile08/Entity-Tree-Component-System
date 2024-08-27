@@ -12,74 +12,36 @@
 #pragma once
 
 #include "Detail/Core.h"
-
-#include "Detail/World.h"
-#include "Entity.h"
+#include "Detail/Archetype.h"
 
 #include <set>
 #include <variant>
 
 namespace etcs {
 
-class BasicSystem {
+template <class... Types> class System {
 public:
-	virtual ~BasicSystem() = default;
-
-	virtual void run() = 0;
-	virtual object_id id() const noexcept = 0;
-
-protected:
-	virtual std::size_t generateHash() const = 0;
-
-	friend class detail::SystemManager;
-};
-
-template <class... Types> class System : public BasicSystem {
-public:
-	System(detail::World* world = detail::globalWorld) : 
-		m_world(world) {
-		m_world->insertSystem(this);
-	}
+	constexpr System(const System&) = default;
 	constexpr System(System&&) = default;
-	~System() {
-		m_world->eraseSystem(m_id);
-	}
 
-	void run() override {
-		auto archetype = m_world->systemArchetype(m_id);
-		if (archetype) archetype->template each<Types...>(m_callable);
-	}
-	void operator()() {
-		auto archetype = m_world->systemArchetype(m_id);
-		if (archetype) archetype->template each<Types...>(m_callable);
-	}
+	System& operator=(const System&) = default;
+	System& operator=(System&&) = default;
 
 	template <class Callable> void each(Callable&& callable) {
-		m_callable = std::forward<Callable>(callable);
+		if (auto archetype = m_archetypes->systemArchetype(m_id); archetype) archetype->template each<Types...>(std::forward<Callable>(callable));
 	}
 
-	[[nodiscard]] object_id id() const noexcept override {
+	[[nodiscard]] object_id id() const noexcept {
 		return m_id;
 	}
 
 private:
-	detail::World* m_world;
-	std::size_t m_id;
+	object_id m_id;
+	detail::ArchetypeManager* m_archetypes;
 
-	function_t<void, Types&...> m_callable;
+	constexpr System(object_id id, detail::ArchetypeManager* archetypes) : m_id(id), m_archetypes(archetypes) { }
 
-
-	[[nodiscard]] std::size_t generateHash() const override {
-		std::set<lsd::type_id> container({ lsd::typeId<std::remove_cv_t<Types>>()... });
-
-		auto hash = container.size();
-
-		for (const auto& component : container) {
-			hash ^= reinterpret_cast<std::uintptr_t>(component) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-		}
-
-		return hash;
-	}
+	friend class World;
 };
 
 } // namespace etcs
