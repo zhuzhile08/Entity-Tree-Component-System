@@ -11,9 +11,10 @@
 
 #pragma once
 
-#include <LSD/UniquePointer.h>
-
 #include "Detail/Core.h"
+
+#include "Detail/Archetype.h"
+#include "Detail/EntityManager.h"
 
 namespace etcs {
 
@@ -32,5 +33,45 @@ protected:
 };
 
 using BasicScript = BasicComponent;
+
+
+template <class Ty> class ComponentView {
+public:
+	using value_type = Ty;
+	using const_value = const Ty;
+	using reference = value_type&;
+	using const_reference = const_value&;
+
+	ComponentView(const ComponentView&) = default;
+	ComponentView(ComponentView&&) = default;
+
+	ComponentView& operator=(const ComponentView&) = default;
+	ComponentView& operator=(ComponentView&&) = default;
+
+	[[nodiscard]] reference get() {
+		return m_entities->archetype(m_id, m_index)->template component<value_type>(m_id);
+	}
+	[[nodiscard]] const_reference get() const {
+		return m_entities->archetype(m_id, m_index)->template component<value_type>(m_id);
+	}
+
+	[[nodiscard]] object_id entityId() const {
+		return m_id;
+	}
+	[[nodiscard]] bool alive() const {
+		return m_entities->contains(m_id);
+	}
+
+private:
+	object_id m_id;
+	std::size_t m_index;
+
+	detail::EntityManager* m_entities;
+
+	ComponentView(object_id id, std::size_t index, detail::EntityManager* entities) : m_id(id), m_index(index), m_entities(entities) { }
+
+	friend class World;
+	friend class Entity;
+};
 
 } // namespace etcs

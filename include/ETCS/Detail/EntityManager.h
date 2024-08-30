@@ -52,19 +52,27 @@ private:
 public:
 	constexpr EntityManager(World* world) noexcept : m_world(world) { }
 
-	Entity insert(string_view_t name);
-	Entity insert(string_view_t name, object_id parentId);
+	[[nodiscard]] Entity insert(string_view_t name);
+	[[nodiscard]] Entity insert(string_view_t name, object_id parentId);
 	void erase(object_id id);
 
 	void clear(object_id id);
 
-	EntityData& data(object_id id, std::size_t index);
-	const EntityData& data(object_id id, std::size_t index) const;
-
 	bool contains(object_id id) const;
 
-	Archetype*& archetype(object_id entityId);
-	const Archetype* archetype(object_id entityId) const;
+	[[nodiscard]] EntityData& data(object_id id, std::size_t& index);
+	[[nodiscard]] const EntityData& data(object_id id, std::size_t& index) const;
+	[[nodiscard]] EntityData& cData(object_id id, std::size_t index);
+	[[nodiscard]] const EntityData& cData(object_id id, std::size_t index) const;
+
+	[[nodiscard]] Archetype*& archetype(object_id id, std::size_t& index);
+	[[nodiscard]] const Archetype* archetype(object_id id, std::size_t& index) const;
+
+	[[nodiscard]] Entity find(object_id entityId) const;
+
+	[[nodiscard]] World* world() {
+		return m_world;
+	}
 
 private:
 	lsd::UnorderedSparseMap<EntityData, Archetype*, Hasher, Equal> m_lookup;
@@ -73,8 +81,6 @@ private:
 	World* m_world;
 
 	object_id uniqueId();
-
-	friend class Entity;
 };
 
 } // namespace detail

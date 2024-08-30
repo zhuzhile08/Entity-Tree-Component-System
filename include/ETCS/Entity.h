@@ -13,6 +13,7 @@
 
 #include "Detail/Core.h"
 
+#include "Component.h"
 #include "World.h"
 
 #include "LSD/UnorderedSparseSet.h"
@@ -42,26 +43,21 @@ public:
 
 	iterator begin();
 	const_iterator begin() const;
-	const_iterator cbegin() const;
+	const_iterator cbegin();
 
 	iterator end();
 	const_iterator end() const;
-	const_iterator cend() const;
+	const_iterator cend();
 
-	template <class Ty, class... Args> Entity& insertComponent(Args&&... args) {
-		m_world->addComponent<Ty>(m_id, std::forward<Args>(args)...);
-		return *this;
+	template <class Ty, class... Args> ComponentView<Ty> insertComponent(Args&&... args) {
+		return m_world->insertComponent<Ty>(m_id, m_index, std::forward<Args>(args)...);
 	}
 
 	Entity insertChild(const Entity& child);
 	Entity insertChild(string_view_t name);
 
 	template <class Ty> Entity& erase() {
-		m_world->eraseComponent<Ty>(m_id);
-		return *this;
-	}
-	template <class Ty> const Entity& erase() const {
-		m_world->eraseComponent<Ty>(m_id);
+		m_world->eraseComponent<Ty>(m_id, m_index);
 		return *this;
 	}
 
@@ -82,36 +78,33 @@ public:
 	iterator find(string_view_t name);
 	const_iterator find(string_view_t name) const;
 
-	template <class Ty> bool contains() const {
-		return m_world->containsComponent<Ty>(m_id);
+	template <class Ty> bool contains() {
+		return m_world->containsComponent<Ty>(m_id, m_index);
 	}
 
-	bool contains(string_view_t name) const;
+	bool contains(string_view_t name);
 	bool hasParent() const;
 
-	template <class Ty> [[nodiscard]] Ty& component() {
-		return m_world->component<Ty>(m_id);
-	}
-	template <class Ty> [[nodiscard]] const Ty& component() const {
-		return m_world->component<Ty>(m_id);
+	template <class Ty> [[nodiscard]] ComponentView<Ty> component() {
+		return ComponentView<Ty>(m_id, m_index, &m_world->m_entities);
 	}
 
-	[[nodiscard]] Entity at(string_view_t name) const;
-	[[nodiscard]] Entity operator[](string_view_t name) const;
+	[[nodiscard]] Entity at(string_view_t name);
+	[[nodiscard]] Entity operator[](string_view_t name);
 
 	[[nodiscard]] bool alive() const;
-	[[nodiscard]] bool active() const;
+	[[nodiscard]] bool active();
 
-	[[nodiscard]] bool hasComponents() const;
-	[[nodiscard]] bool hasChildren() const;
+	[[nodiscard]] bool hasComponents();
+	[[nodiscard]] bool hasChildren();
 
-	[[nodiscard]] std::size_t size() const;
-	[[nodiscard]] string_view_t name() const;
-	[[nodiscard]] Entity parent() const;
+	[[nodiscard]] std::size_t size();
+	[[nodiscard]] string_view_t name();
+	[[nodiscard]] Entity parent();
 	[[nodiscard]] constexpr object_id id() const noexcept { 
 		return m_id;
 	}
-	[[nodiscard]] constexpr World* world() const noexcept {
+	[[nodiscard]] constexpr World* world() const noexcept {	
 		return m_world;
 	}
 	[[nodiscard]] constexpr const World* world() noexcept {

@@ -21,7 +21,7 @@ object_id EntityManager::uniqueId() {
 }
 
 Entity EntityManager::insert(string_view_t name) {
-	auto& archetype = m_world->m_archetypes.m_archetypes.front();
+	auto archetype = m_world->m_archetypes.defaultArchetype();
 
 	auto res = m_lookup.emplace(EntityData(uniqueId(), name), archetype).first;
 	archetype->m_entities.emplace(res->first.m_id);
@@ -31,9 +31,9 @@ Entity EntityManager::insert(string_view_t name) {
 Entity EntityManager::insert(string_view_t name, object_id parentId) {
 	if (auto parent = m_lookup.find(parentId); parent != m_lookup.end()) {
 		if (auto it = parent->first.m_children.find(name); it == parent->first.m_children.end()) {
-			auto& archetype = m_world->m_archetypes.m_archetypes.front();
+			auto archetype = m_world->m_archetypes.defaultArchetype();
 
-			auto eIt = m_lookup.emplace(EntityData(uniqueId(), name, &parent->first), archetype.get()).first;
+			auto eIt = m_lookup.emplace(EntityData(uniqueId(), name, &parent->first), archetype).first;
 			archetype->m_entities.emplace(eIt->first.m_id);
 
 			m_lookup.find(parentId)->first.m_children.emplace(EntityView { eIt->first.m_id, eIt->first.m_name }); // find parent again because of memory invalidation
@@ -42,7 +42,7 @@ Entity EntityManager::insert(string_view_t name, object_id parentId) {
 		} else return Entity(it->id, std::numeric_limits<std::size_t>::max(), m_world);
 	} else throw std::out_of_range("etcs::detail::EntityManager::insert(): Parent ID does not exist!");
 
-	return Entity(nullId, 0, nullptr);
+	return Entity(nullId, std::numeric_limits<std::size_t>::max(), nullptr);
 }
 
 void EntityManager::erase(object_id id) {
@@ -61,23 +61,45 @@ void EntityManager::erase(object_id id) {
 void EntityManager::clear(object_id id) {
 	auto& archetype = m_lookup.at(id);
 	archetype->eraseEntity(id);
-	archetype = m_world->m_archetypes.m_archetypes.front();
+	archetype = m_world->m_archetypes.defaultArchetype();
 }
 
-detail::EntityData& EntityManager::data(object_id id, std::size_t index) {
+detail::EntityData& EntityManager::data(object_id id, std::size_t& index) {
 	if (m_lookup.size() > index) if (auto& e = (m_lookup.begin() + index)->first; e.m_id == id) return e;
 	
-	if (auto it = m_lookup.find(id); it != m_lookup.end()) return it->first;
-	else throw std::out_of_range("etcs::detail::EntityManager::data(): Entity ID did not exist!");
+	if (auto it = m_lookup.find(id); it != m_lookup.end()) {
+		index = it - m_lookup.begin();
+		return it->first;
+	} else throw std::out_of_range("etcs::detail::EntityManager::data(): Entity ID did not exist!");
 
 	return m_lookup.begin()->first;
 }
 
-const detail::EntityData& EntityManager::data(object_id id, std::size_t index) const {
+const detail::EntityData& EntityManager::data(object_id id, std::size_t& index) const {
 	if (m_lookup.size() > index) if (auto& e = (m_lookup.begin() + index)->first; e.m_id == id) return e;
 	
-	if (auto it = m_lookup.find(id); it != m_lookup.end()) return it->first;
-	else throw std::out_of_range("etcs::detail::EntityManager::data(): Entity ID did not exist!");
+	if (auto it = m_lookup.find(id); it != m_lookup.end()) {
+		index = it - m_lookup.begin();
+		return it->first;
+	} else throw std::out_of_range("etcs::detail::EntityManager::data(): Entity ID did not exist!");
+
+	return m_lookup.begin()->first;
+}
+
+detail::EntityData& EntityManager::cData(object_id id, std::size_t index) {
+	if (m_lookup.size() > index) if (auto& e = (m_lookup.begin() + index)->first; e.m_id == id) return e;
+	
+	if (auto it = m_lookup.find(id); it != m_lookup.end()) index = it - m_lookup.begin();
+	else throw std::out_of_range("etcs::detail::EntityManager::cData(): Entity ID did not exist!");
+
+	return m_lookup.begin()->first;
+}
+
+const detail::EntityData& EntityManager::cData(object_id id, std::size_t index) const {
+	if (m_lookup.size() > index) if (auto& e = (m_lookup.begin() + index)->first; e.m_id == id) return e;
+	
+	if (auto it = m_lookup.find(id); it != m_lookup.end()) index = it - m_lookup.begin();
+	else throw std::out_of_range("etcs::detail::EntityManager::cData(): Entity ID did not exist!");
 
 	return m_lookup.begin()->first;
 }
@@ -86,12 +108,33 @@ bool EntityManager::contains(object_id id) const {
 	return m_lookup.contains(id);
 }
 
-Archetype*& EntityManager::archetype(object_id entityId) {
-	return m_lookup.at(entityId);
+Archetype*& EntityManager::archetype(object_id id, std::size_t& index) {
+	if (m_lookup.size() > index) if (auto it = m_lookup.begin() + index; it->first.m_id == id) return it->second;
+
+	if (auto it = m_lookup.find(id); it != m_lookup.end()) {
+		index = it - m_lookup.begin();
+		return it->second;
+	} else throw std::out_of_range("etcs::detail::EntityManager::archetype(): Entity ID did not exist!");
+
+	return m_lookup.begin()->second;
 }
 
-const Archetype* EntityManager::archetype(object_id entityId) const {
-	return m_lookup.at(entityId);
+const Archetype* EntityManager::archetype(object_id id, std::size_t& index) const {
+	if (m_lookup.size() > index) if (auto it = m_lookup.begin() + index; it->first.m_id == id) return it->second;
+
+	if (auto it = m_lookup.find(id); it != m_lookup.end()) {
+		index = it - m_lookup.begin();
+		return it->second;
+	} else throw std::out_of_range("etcs::detail::EntityManager::archetype(): Entity ID did not exist!");
+
+	return m_lookup.begin()->second;
+}
+
+Entity EntityManager::find(object_id entityId) const {
+	if (auto it = m_lookup.find(entityId); it != m_lookup.end()) return Entity(it->first.m_id, it - m_lookup.begin(), m_world);
+	else throw std::out_of_range("etcs::detail::EntityManager::data(): Entity ID did not exist!");
+
+	return Entity(nullId, std::numeric_limits<std::size_t>::max(), nullptr);
 }
 
 } // namespace detail

@@ -14,9 +14,9 @@ Entity::iterator Entity::begin() {
 	return m_world->entityData(m_id, m_index).m_children.begin();
 }
 Entity::const_iterator Entity::begin() const {
-	return m_world->entityData(m_id, m_index).m_children.cbegin();
+	return m_world->cEntityData(m_id, m_index).m_children.cbegin();
 }
-Entity::const_iterator Entity::cbegin() const {
+Entity::const_iterator Entity::cbegin() {
 	return m_world->entityData(m_id, m_index).m_children.cbegin();
 }
 
@@ -24,15 +24,15 @@ Entity::iterator Entity::end() {
 	return m_world->entityData(m_id, m_index).m_children.end();
 }
 Entity::const_iterator Entity::end() const {
-	return m_world->entityData(m_id, m_index).m_children.cend();
+	return m_world->cEntityData(m_id, m_index).m_children.cend();
 }
-Entity::const_iterator Entity::cend() const {
+Entity::const_iterator Entity::cend() {
 	return m_world->entityData(m_id, m_index).m_children.cend();
 }
 
 Entity Entity::insertChild(const Entity& child) {
 	auto& data = m_world->entityData(m_id, m_index);
-	auto& childData = m_world->entityData(child.m_id, child.m_index);
+	auto& childData = m_world->cEntityData(child.m_id, child.m_index);
 	
 	childData.m_parent = { data.m_id, data.m_name };
 	data.m_children.emplace(detail::EntityView { childData.m_id, childData.m_name });
@@ -72,7 +72,7 @@ Entity& Entity::clearChildren() {
 
 Entity& Entity::rename(string_view_t name) {
 	auto& data = m_world->entityData(m_id, m_index);
-	auto& parentData = m_world->entityData(data.m_parent.id, 0);
+	auto& parentData = m_world->cEntityData(data.m_parent.id, 0);
 
 	parentData.m_children.erase(data.m_name);
 	data.m_name = name;
@@ -94,60 +94,60 @@ Entity::iterator Entity::find(string_view_t name) {
 	return m_world->entityData(m_id, m_index).m_children.find(name); 
 }
 Entity::const_iterator Entity::find(string_view_t name) const { 
-	return m_world->entityData(m_id, m_index).m_children.find(name); 
+	return m_world->cEntityData(m_id, m_index).m_children.find(name); 
 }
 
-bool Entity::contains(string_view_t name) const { 
+bool Entity::contains(string_view_t name) { 
 	return m_world->entityData(m_id, m_index).m_children.contains(name); 
 }
 bool Entity::hasParent() const {
-	return m_world->containsEntity(m_world->entityData(m_id, m_index).m_parent.id);
+	return m_world->containsEntity(m_world->cEntityData(m_id, m_index).m_parent.id);
 }
 
-Entity Entity::at(string_view_t name) const {
+Entity Entity::at(string_view_t name) {
 	std::size_t beg = 0, cur = 0;
 	auto p = m_id;
 
 	while ((cur = name.find("::", beg)) < name.size()) {
-		p = m_world->entityData(p, 0).m_children.at(name.substr(beg, cur - beg)).id;
+		p = m_world->cEntityData(p, 0).m_children.at(name.substr(beg, cur - beg)).id;
 		beg = cur + 2;
 	}
 
-	return Entity(m_world->entityData(p, 0).m_children.at(name.substr(beg)).id, 0, m_world);
+	return Entity(m_world->cEntityData(p, 0).m_children.at(name.substr(beg)).id, 0, m_world);
 }
-Entity Entity::operator[](string_view_t name) const {
+Entity Entity::operator[](string_view_t name) {
 	std::size_t beg = 0, cur = 0;
 	auto p = m_id;
 
 	while ((cur = name.find("::", beg)) < name.size()) {
-		p = m_world->entityData(p, 0).m_children.at(name.substr(beg, cur - beg)).id;
+		p = m_world->cEntityData(p, 0).m_children.at(name.substr(beg, cur - beg)).id;
 		beg = cur + 2;
 	}
 
-	return Entity(m_world->entityData(p, 0).m_children.at(name.substr(beg)).id, 0, m_world);
+	return Entity(m_world->cEntityData(p, 0).m_children.at(name.substr(beg)).id, 0, m_world);
 }
 
 bool Entity::alive() const {
 	return m_world->containsEntity(m_id);
 }
-bool Entity::active() const {
+bool Entity::active() {
 	return m_world->entityData(m_id, m_index).m_active;
 }
 
-bool Entity::hasComponents() const { 
+bool Entity::hasComponents() { 
 	return m_world->entityData(m_id, m_index).m_children.empty(); 
 }
-bool Entity::hasChildren() const { 
+bool Entity::hasChildren() { 
 	return m_world->entityData(m_id, m_index).m_children.empty(); 
 }
 
-std::size_t Entity::size() const {
+std::size_t Entity::size() {
 	return m_world->entityData(m_id, m_index).m_children.size();
 }
-string_view_t Entity::name() const {
+string_view_t Entity::name() {
 	return m_world->entityData(m_id, m_index).m_name;
 }
-Entity Entity::parent() const {
+Entity Entity::parent() {
 	return Entity(m_world->entityData(m_id, m_index).m_parent.id, 0, m_world);
 }
 

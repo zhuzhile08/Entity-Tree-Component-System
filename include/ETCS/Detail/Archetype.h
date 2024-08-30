@@ -171,10 +171,10 @@ public:
 	constexpr Archetype() = default;
 	constexpr Archetype(Archetype&&) = default;
 
-	template <class Ty, class... Args> Ty& insertEntityFromSub(object_id entityId, Archetype& subset, Args&&... args) {
+	template <class Ty, class... Args> void insertEntityFromSub(object_id entityId, Archetype& subset, Args&&... args) {
 		m_entities.emplace(entityId);
 
-		auto& c = *static_cast<Ty*>(m_components.at(lsd::typeId<Ty>()).emplace_back(Ty(std::forward<Args>(args)...)));
+		m_components.at(lsd::typeId<Ty>()).emplace_back(Ty(std::forward<Args>(args)...));
 
 		auto entityIndex = (subset.m_entities.find(entityId) - subset.m_entities.begin());
 
@@ -185,8 +185,6 @@ public:
 		}
 
 		subset.eraseEntity(entityId);
-
-		return c;
 	}
 	template <class Ty> void insertEntityFromSuper(object_id entityId, Archetype& superset) {
 		m_entities.emplace(entityId);
@@ -347,12 +345,16 @@ public:
 
 	[[nodiscard]] Archetype* systemArchetype(object_id systemId);
 
+	[[nodiscard]] Archetype* defaultArchetype() {
+		return m_archetypes.front().get();
+	}
+	[[nodiscard]] constexpr World* world() {
+		return m_world;
+	}
+
 private:
 	archetypes m_archetypes;
 	World* m_world;
-
-	friend class EntityManager;
-	template <class...> friend class ::etcs::System;
 };
 
 } // namespace detail

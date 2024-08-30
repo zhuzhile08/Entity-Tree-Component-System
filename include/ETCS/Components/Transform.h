@@ -101,7 +101,7 @@ public:
 	}
 	[[nodiscard]] glm::quat globalOrientation() const {
 		auto parent = entity->parent();
-		return orientation * (parent.alive() ? parent.component<Transform>().orientation : glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+		return orientation * (parent.alive() ? parent.component<Transform>().get().orientation : glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 	}
 	[[nodiscard]] glm::vec3 globalRotation() const {
 		return glm::eulerAngles(globalOrientation());
@@ -110,7 +110,7 @@ public:
 		auto parent = entity->parent();
 
 		if (parent.alive()) {
-			auto& parentTransform = parent.component<Transform>();
+			auto& parentTransform = parent.component<Transform>().get();
 			return glm::rotate(parentTransform.orientation, translation) + parentTransform.globalTranslation();
 		} else {
 			return glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), translation);
@@ -118,7 +118,7 @@ public:
 	}
 	[[nodiscard]] glm::vec3 globalScale() const {
 		auto parent = entity->parent();
-		return orientation * (parent.alive() ? parent.component<Transform>().scale : glm::vec3(0.0f));
+		return orientation * (parent.alive() ? parent.component<Transform>().get().scale : glm::vec3(0.0f));
 	}
 
 	[[nodiscard]] GLM_CONSTEXPR glm::mat4 localTransform() {
@@ -130,7 +130,7 @@ public:
 	}
 	[[nodiscard]] GLM_CONSTEXPR glm::mat4 globalTransform() {
 		auto parent = entity->parent();
-		return localTransform() * (parent.alive() ? parent.component<Transform>().globalTransform() : glm::mat4(1.0f));
+		return localTransform() * (parent.alive() ? parent.component<Transform>().get().globalTransform() : glm::mat4(1.0f));
 	}
 
 	glm::vec3 translation;
