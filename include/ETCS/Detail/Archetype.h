@@ -205,10 +205,10 @@ public:
 	void eraseEntity(object_id entityId);
 
 	template <class Ty> Ty& component(object_id entityId) {
-		return *m_components.at(lsd::typeId<Ty>()).template component<Ty>(m_entities.at(entityId));
+		return *m_components.at(lsd::typeId<Ty>()).template component<Ty>(m_entities.find(entityId) - m_entities.begin());
 	}
 	template <class Ty> const Ty& component(object_id entityId) const {
-		return *m_components.at(lsd::typeId<Ty>()).template component<Ty>(m_entities.at(entityId));
+		return *m_components.at(lsd::typeId<Ty>()).template component<Ty>(m_entities.find(entityId) - m_entities.begin());
 	}
 
 	template <class Ty> bool contains() const {
@@ -237,7 +237,7 @@ public:
 			}
 		} else {
 			for (auto id : m_entities)
-				if (EntityType(id, world).active()) system((*std::get<Types*>(iterators)++)...);
+				if (EntityType(id, 0, world).active()) system((*std::get<Types*>(iterators)++)...);
 		}
 	}
 

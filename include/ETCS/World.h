@@ -32,7 +32,7 @@ public:
 	void eraseEntity(object_id entityId);
 	void clearEntity(object_id entityId);
 
-	bool containsEntity(object_id entityId);
+	bool containsEntity(object_id entityId) const;
 
 	// component functions
 
@@ -73,7 +73,10 @@ private:
 	detail::EntityManager m_entities;
 	detail::SystemManager m_systems;
 
-	detail::EntityData* entityData(object_id entityId);
+
+	detail::EntityData& entityData(object_id entityId, std::size_t index);
+	const detail::EntityData& entityData(object_id entityId, std::size_t index) const;
+
 
 	friend class detail::EntityManager;
 	friend class detail::SystemManager;

@@ -12,10 +12,10 @@ World* globalWorld = nullptr;
 
 
 Entity World::insertEntity(string_view_t name) {
-	return Entity(m_entities.insert(name), this);
+	return m_entities.insert(name);
 }
 Entity World::insertEntity(string_view_t name, Entity parent) {
-	return Entity(m_entities.insert(name, parent.m_id), this);
+	return m_entities.insert(name, parent.id());
 }
 void World::eraseEntity(object_id entityId) {
 	m_entities.erase(entityId);
@@ -24,15 +24,16 @@ void World::clearEntity(object_id entityId) {
 	m_entities.clear(entityId);
 }
 
-bool World::containsEntity(object_id entityId) {
-	return m_entities.m_lookup.find(entityId) != m_entities.m_lookup.end();
+bool World::containsEntity(object_id entityId) const {
+	return m_entities.contains(entityId);
 }
 
-detail::EntityData* World::entityData(object_id entityId) {
-	if (auto it = m_entities.m_lookup.find(entityId); it != m_entities.m_lookup.end()) return &it->first;
-	else throw std::out_of_range("etcs::World::entityData(): Entity ID did not exist!");
+detail::EntityData& World::entityData(object_id entityId, std::size_t index) {
+	return m_entities.data(entityId, index);
+}
 
-	return nullptr;
+const detail::EntityData& World::entityData(object_id entityId, std::size_t index) const {
+	return m_entities.data(entityId, index);
 }
 
 void World::eraseSystem(object_id systemId) {

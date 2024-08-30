@@ -53,15 +53,15 @@ public:
 		return *this;
 	}
 
-	Entity insertChild(Entity child);
+	Entity insertChild(const Entity& child);
 	Entity insertChild(string_view_t name);
 
 	template <class Ty> Entity& erase() {
-		m_world->eraseComponent<Ty>();
+		m_world->eraseComponent<Ty>(m_id);
 		return *this;
 	}
 	template <class Ty> const Entity& erase() const {
-		m_world->eraseComponent<Ty>();
+		m_world->eraseComponent<Ty>(m_id);
 		return *this;
 	}
 
@@ -120,11 +120,12 @@ public:
 
 private:
 	object_id m_id;
+	std::size_t m_index; // only for caching the current index
 	World* m_world;
 
-	constexpr Entity(object_id id, World* world = detail::globalWorld) : m_id(id), m_world(world) { }
+	constexpr Entity(object_id id, std::size_t index, World* world = detail::globalWorld) : m_id(id), m_index(index), m_world(world) { }
 
-	friend class World;
+	friend class detail::EntityManager;
 	friend class detail::Archetype;
 };
 

@@ -38,6 +38,7 @@ private:
 	bool m_active = true;
 
 	friend class EntityManager;
+	friend class ::etcs::World;
 	friend class ::etcs::Entity;
 };
 
@@ -45,29 +46,35 @@ private:
 // Entity manager
 class EntityManager {
 private:
-	CUSTOM_HASHER(Hasher, const EntityData&, std::size_t, static_cast<std::size_t>, .m_id)
-	CUSTOM_EQUAL(Equal, const EntityData&, std::size_t, .m_id)
+	CUSTOM_HASHER(Hasher, const EntityData&, object_id, static_cast<object_id>, .m_id)
+	CUSTOM_EQUAL(Equal, const EntityData&, object_id, .m_id)
 
+public:
 	constexpr EntityManager(World* world) noexcept : m_world(world) { }
 
-	object_id uniqueId();
-
-	object_id insert(string_view_t name);
-	object_id insert(string_view_t name, object_id parentId);
+	Entity insert(string_view_t name);
+	Entity insert(string_view_t name, object_id parentId);
 	void erase(object_id id);
 
 	void clear(object_id id);
 
+	EntityData& data(object_id id, std::size_t index);
+	const EntityData& data(object_id id, std::size_t index) const;
+
+	bool contains(object_id id) const;
+
 	Archetype*& archetype(object_id entityId);
 	const Archetype* archetype(object_id entityId) const;
 
-
+private:
 	lsd::UnorderedSparseMap<EntityData, Archetype*, Hasher, Equal> m_lookup;
 	vector_t<object_id> m_unused;
 
 	World* m_world;
 
-	friend class ::etcs::World;
+	object_id uniqueId();
+
+	friend class Entity;
 };
 
 } // namespace detail
