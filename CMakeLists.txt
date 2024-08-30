@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24.0)
 set(CMAKE_CXX_STANDARD 23)
 
-project(EntityTreeComponentSystem VERSION 1.2.0)
+project(EntityTreeComponentSystem VERSION 1.2.1)
 
 option(ETCS_STATIC "Build ETCS statically" ON)
 
@@ -50,6 +50,7 @@ set (ETCS_SOURCE_FILES
 	"src/Detail/Archetype.cpp"
 	"src/Detail/EntityManager.cpp"
 	"src/Detail/SystemManager.cpp"
+	"src/Components/Transform.cpp"
 )
 
 if(BUILD_STATIC)
