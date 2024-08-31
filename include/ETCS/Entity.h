@@ -26,6 +26,7 @@ private:
 	using const_iterator = lsd::UnorderedSparseSet<detail::EntityView, detail::EVHasher, detail::EVEqual>::const_iterator;
 
 public:
+	constexpr Entity() = default;
 	constexpr Entity(const detail::EntityView& view, Entity& parent) : m_id(view.id), m_world(parent.m_world) { }
 	constexpr Entity(const Entity&) = default;
 	constexpr Entity(Entity&&) = default;
@@ -112,9 +113,9 @@ public:
 	}
 
 private:
-	object_id m_id;
-	std::size_t m_index; // only for caching the current index
-	World* m_world;
+	object_id m_id = nullId;
+	std::size_t m_index = -1; // only for caching the current index
+	World* m_world = nullptr;
 
 	constexpr Entity(object_id id, std::size_t index, World* world = detail::globalWorld) : m_id(id), m_index(index), m_world(world) { }
 
