@@ -86,24 +86,6 @@ const detail::EntityData& EntityManager::data(object_id id, std::size_t& index) 
 	return m_lookup.begin()->first;
 }
 
-detail::EntityData& EntityManager::cData(object_id id, std::size_t index) {
-	if (m_lookup.size() > index) if (auto& e = (m_lookup.begin() + index)->first; e.m_id == id) return e;
-	
-	if (auto it = m_lookup.find(id); it != m_lookup.end()) index = it - m_lookup.begin();
-	else throw std::out_of_range("etcs::detail::EntityManager::cData(): Entity ID did not exist!");
-
-	return m_lookup.begin()->first;
-}
-
-const detail::EntityData& EntityManager::cData(object_id id, std::size_t index) const {
-	if (m_lookup.size() > index) if (auto& e = (m_lookup.begin() + index)->first; e.m_id == id) return e;
-	
-	if (auto it = m_lookup.find(id); it != m_lookup.end()) index = it - m_lookup.begin();
-	else throw std::out_of_range("etcs::detail::EntityManager::cData(): Entity ID did not exist!");
-
-	return m_lookup.begin()->first;
-}
-
 bool EntityManager::contains(object_id id) const {
 	return m_lookup.contains(id);
 }

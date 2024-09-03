@@ -72,8 +72,6 @@ private:
 
 	detail::EntityData& entityData(object_id entityId, std::size_t& index);
 	const detail::EntityData& entityData(object_id entityId, std::size_t& index) const;
-	detail::EntityData& cEntityData(object_id entityId, std::size_t index);
-	const detail::EntityData& cEntityData(object_id entityId, std::size_t index) const;
 
 
 	friend class detail::EntityManager;

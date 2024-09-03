@@ -36,14 +36,6 @@ const detail::EntityData& World::entityData(object_id entityId, std::size_t& ind
 	return m_entities.data(entityId, index);
 }
 
-detail::EntityData& World::cEntityData(object_id entityId, std::size_t index) {
-	return m_entities.cData(entityId, index);
-}
-
-const detail::EntityData& World::cEntityData(object_id entityId, std::size_t index) const {
-	return m_entities.cData(entityId, index);
-}
-
 void World::eraseSystem(object_id systemId) {
 	m_systems.erase(systemId);
 }

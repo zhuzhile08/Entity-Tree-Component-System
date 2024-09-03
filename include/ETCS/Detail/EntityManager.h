@@ -62,8 +62,6 @@ public:
 
 	[[nodiscard]] EntityData& data(object_id id, std::size_t& index);
 	[[nodiscard]] const EntityData& data(object_id id, std::size_t& index) const;
-	[[nodiscard]] EntityData& cData(object_id id, std::size_t index);
-	[[nodiscard]] const EntityData& cData(object_id id, std::size_t index) const;
 
 	[[nodiscard]] Archetype*& archetype(object_id id, std::size_t& index);
 	[[nodiscard]] const Archetype* archetype(object_id id, std::size_t& index) const;

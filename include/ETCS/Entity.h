@@ -16,7 +16,7 @@
 #include "Component.h"
 #include "World.h"
 
-#include "LSD/UnorderedSparseSet.h"
+#include <LSD/UnorderedSparseSet.h>
  
 namespace etcs {
 
@@ -44,18 +44,18 @@ public:
 
 	iterator begin();
 	const_iterator begin() const;
-	const_iterator cbegin();
+	const_iterator cbegin() const;
 
 	iterator end();
 	const_iterator end() const;
-	const_iterator cend();
+	const_iterator cend() const;
 
-	template <class Ty, class... Args> ComponentView<Ty> insertComponent(Args&&... args) {
+	template <class Ty, class... Args> ComponentView<Ty> insertComponent(Args&&... args) const {
 		return m_world->insertComponent<Ty>(m_id, m_index, std::forward<Args>(args)...);
 	}
 
-	Entity insertChild(const Entity& child);
-	Entity insertChild(string_view_t name);
+	Entity insertChild(const Entity& child) const;
+	Entity insertChild(string_view_t name) const;
 
 	template <class Ty> Entity& erase() {
 		m_world->eraseComponent<Ty>(m_id, m_index);
@@ -79,29 +79,29 @@ public:
 	iterator find(string_view_t name);
 	const_iterator find(string_view_t name) const;
 
-	template <class Ty> bool contains() {
+	template <class Ty> bool contains() const {
 		return m_world->containsComponent<Ty>(m_id, m_index);
 	}
 
-	bool contains(string_view_t name);
+	bool contains(string_view_t name) const;
 	bool hasParent() const;
 
-	template <class Ty> [[nodiscard]] ComponentView<Ty> component() {
+	template <class Ty> [[nodiscard]] ComponentView<Ty> component() const {
 		return ComponentView<Ty>(m_id, m_index, &m_world->m_entities);
 	}
 
-	[[nodiscard]] Entity at(string_view_t name);
-	[[nodiscard]] Entity operator[](string_view_t name);
+	[[nodiscard]] Entity at(string_view_t name) const;
+	[[nodiscard]] Entity operator[](string_view_t name) const;
 
 	[[nodiscard]] bool alive() const;
-	[[nodiscard]] bool active();
+	[[nodiscard]] bool active() const;
 
-	[[nodiscard]] bool hasComponents();
-	[[nodiscard]] bool hasChildren();
+	[[nodiscard]] bool hasComponents() const;
+	[[nodiscard]] bool hasChildren() const;
 
-	[[nodiscard]] std::size_t size();
-	[[nodiscard]] string_view_t name();
-	[[nodiscard]] Entity parent();
+	[[nodiscard]] std::size_t size() const;
+	[[nodiscard]] string_view_t name() const;
+	[[nodiscard]] Entity parent() const;
 	[[nodiscard]] constexpr object_id id() const noexcept { 
 		return m_id;
 	}
@@ -114,7 +114,8 @@ public:
 
 private:
 	object_id m_id = nullId;
-	std::size_t m_index = -1; // only for caching the current index
+	mutable std::size_t m_index = -1; // only for caching the current index
+
 	World* m_world = nullptr;
 
 	constexpr Entity(object_id id, std::size_t index, World* world = detail::globalWorld) : m_id(id), m_index(index), m_world(world) { }
