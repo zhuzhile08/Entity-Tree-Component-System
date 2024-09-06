@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24.0)
 set(CMAKE_CXX_STANDARD 23)
 
-project(EntityTreeComponentSystem VERSION 1.2.2)
+project(EntityTreeComponentSystem VERSION 1.2.3)
 
 option(ETCS_STATIC "Build ETCS statically" ON)
 

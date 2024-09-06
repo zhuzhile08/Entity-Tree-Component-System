@@ -21,6 +21,7 @@ namespace etcs {
 
 template <class... Types> class System {
 public:
+	constexpr System() = default;
 	constexpr System(const System&) = default;
 	constexpr System(System&&) = default;
 

@@ -42,11 +42,12 @@ public:
 	using reference = value_type&;
 	using const_reference = const_value&;
 
-	ComponentView(const ComponentView&) = default;
-	ComponentView(ComponentView&&) = default;
+	constexpr ComponentView() = default;
+	constexpr ComponentView(const ComponentView&) = default;
+	constexpr ComponentView(ComponentView&&) = default;
 
-	ComponentView& operator=(const ComponentView&) = default;
-	ComponentView& operator=(ComponentView&&) = default;
+	constexpr ComponentView& operator=(const ComponentView&) = default;
+	constexpr ComponentView& operator=(ComponentView&&) = default;
 
 	[[nodiscard]] reference get() {
 		return m_entities->archetype(m_id, m_index)->template component<value_type>(m_id);
@@ -68,7 +69,7 @@ private:
 
 	detail::EntityManager* m_entities;
 
-	ComponentView(object_id id, std::size_t index, detail::EntityManager* entities) : m_id(id), m_index(index), m_entities(entities) { }
+	constexpr ComponentView(object_id id, std::size_t index, detail::EntityManager* entities) : m_id(id), m_index(index), m_entities(entities) { }
 
 	friend class World;
 	friend class Entity;
