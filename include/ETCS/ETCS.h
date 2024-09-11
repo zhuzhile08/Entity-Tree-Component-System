@@ -33,8 +33,8 @@ void quit();
 	return detail::globalWorld->insertEntity(name, parent);
 }
 
-template <class... Types> [[nodiscard]] inline auto insertSystem() {
-	return detail::globalWorld->insertSystem<Types...>();
+template <class Callable, class... Types> [[nodiscard]] inline auto insertSystem(Callable&& callable) {
+	return detail::globalWorld->insertSystem<Callable, Types...>(std::forward<Callable>(callable));
 }
 
 } // namespace etcs

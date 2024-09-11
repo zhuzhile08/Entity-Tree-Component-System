@@ -28,21 +28,43 @@ public:
 	System& operator=(const System&) = default;
 	System& operator=(System&&) = default;
 
-	template <class Callable> void each(Callable&& callable) {
-		if (auto archetype = m_archetypes->systemArchetype(m_id); archetype) archetype->template each<Entity, Types...>(m_archetypes->world(), std::forward<Callable>(callable));
+	void destroy() noexcept {
+		m_systems->erase(m_id);
+
+		*this = System();
+	}
+	
+	constexpr void swap(Entity& other) noexcept { 
+		auto t = *this; 
+		*this = other;
+		other = t;
 	}
 
-	[[nodiscard]] object_id id() const noexcept {
+	void each() {
+		m_systems->each<Types...>(m_id, m_index);
+	}
+
+	[[nodiscard]] decltype(auto) function() const {
+		return (m_systems->system<Types...>(m_id, m_index).m_system);
+	}
+
+	[[nodiscard]] object_id id() const {
 		return m_id;
+	}
+	[[nodiscard]] bool alive() const {
+		return m_systems->contains(m_id);
 	}
 
 private:
-	object_id m_id;
-	detail::ArchetypeManager* m_archetypes;
+	object_id m_id = nullId;
+	mutable std::size_t m_index = -1;
 
-	constexpr System(object_id id, detail::ArchetypeManager* archetypes) : m_id(id), m_archetypes(archetypes) { }
+	detail::SystemManager* m_systems = nullptr;
+
+	constexpr System(object_id id, std::size_t index, detail::SystemManager* systems) : m_id(id), m_index(index), m_systems(systems) { }
 
 	friend class World;
 };
+
 
 } // namespace etcs

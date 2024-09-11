@@ -18,23 +18,6 @@
 
 namespace etcs {
 
-class BasicComponent {
-public:
-	BasicComponent() noexcept = default;
-	virtual ~BasicComponent() noexcept = default;
-
-	virtual void init(void) { }
-	virtual void update(void) { }
-
-protected:
-	Entity* entity;
-
-	friend class Entity;
-};
-
-using BasicScript = BasicComponent;
-
-
 template <class Ty> class ComponentView {
 public:
 	using value_type = Ty;

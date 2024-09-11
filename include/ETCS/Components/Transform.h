@@ -15,14 +15,14 @@
 
 #include "../Detail/Core.h"
 
-#include "../Component.h"
+#include "../Entity.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 namespace etcs {
 
-class Transform : public BasicComponent {
+class Transform {
 public:
 	Transform(
 		const glm::vec3& translation = glm::vec3(0.0f), 
@@ -72,7 +72,6 @@ public:
 	[[nodiscard]] const glm::vec3& translation() const {
 		return m_translation;
 	}
-	[[nodiscard]] glm::vec3 globalTranslation() const;
 
 	[[nodiscard]] glm::quat& localOrientation();
 	[[nodiscard]] const glm::quat& localOrientation() const {
@@ -82,10 +81,9 @@ public:
 	[[nodiscard]] const glm::quat& orientation() const {
 		return m_orientation;
 	}
-	[[nodiscard]] glm::quat globalOrientation() const;
+	
 	[[nodiscard]] glm::vec3 localRotation() const;
 	[[nodiscard]] glm::vec3 rotation() const;
-	[[nodiscard]] glm::vec3 globalRotation() const;
 
 	[[nodiscard]] glm::vec3& localScale();
 	[[nodiscard]] const glm::vec3& localScale() const {
@@ -95,11 +93,15 @@ public:
 	[[nodiscard]] const glm::vec3& scale() const {
 		return m_scale;
 	}
-	[[nodiscard]] glm::vec3 globalScale() const;
 
 	[[nodiscard]] glm::mat4 localTransform();
 	[[nodiscard]] glm::mat4 transform();
-	[[nodiscard]] glm::mat4 globalTransform();
+
+	[[nodiscard]] glm::vec3 globalTranslation(const Entity& entity) const;
+	[[nodiscard]] glm::quat globalOrientation(const Entity& entity) const;
+	[[nodiscard]] glm::vec3 globalRotation(const Entity& entity) const;
+	[[nodiscard]] glm::vec3 globalScale(const Entity& entity) const;
+	[[nodiscard]] glm::mat4 globalTransform(const Entity& entity);
 
 private:
 	glm::vec3 m_translation;
@@ -108,7 +110,7 @@ private:
 
 	glm::mat4 m_localTransform = glm::mat4(1.0f);
 
-	bool m_dirty = false;
+	mutable bool m_dirty = false;
 
 	friend class Spatial;
 };

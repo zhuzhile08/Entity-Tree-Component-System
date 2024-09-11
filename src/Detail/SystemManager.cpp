@@ -22,10 +22,6 @@ void SystemManager::erase(object_id systemId) {
 	m_lookup.erase(systemId);
 }
 
-std::size_t SystemManager::hash(object_id systemId) const {
-	return m_lookup.at(systemId);
-}
-
 } // namespace detail
 
 } // namespace etcs

@@ -24,7 +24,7 @@ namespace etcs {
 
 class World {
 public:
-	World() : m_archetypes(this), m_entities(this), m_systems(this) { }
+	World() : m_archetypes(this), m_entities(this), m_systems(&this->m_archetypes) { }
 
 	// entity functions
 
@@ -37,19 +37,19 @@ public:
 
 	// component functions
 
-	template <class Ty, class... Args> ComponentView<Ty> insertComponent(object_id entityId, std::size_t& index, Args&&... args) {
+	template <class Ty, class... Args> ComponentView<std::remove_volatile_t<std::remove_reference_t<Ty>>> insertComponent(object_id entityId, std::size_t& index, Args&&... args) {
 		auto& base = m_entities.archetype(entityId, index);
 
 		auto archetype = m_archetypes.addOrFindSuperset<Ty>(base);
-		archetype->template insertEntityFromSub<Ty>(entityId, *std::exchange(base, archetype), std::forward<Args>(args)...);
+		archetype->template insertEntityFromSub<std::remove_volatile_t<std::remove_reference_t<Ty>>>(entityId, *std::exchange(base, archetype), std::forward<Args>(args)...);
 
-		return ComponentView<Ty>(entityId, index, &m_entities);
+		return ComponentView<std::remove_volatile_t<std::remove_reference_t<Ty>>>(entityId, index, &m_entities);
 	}
 	template <class Ty> void eraseComponent(object_id entityId, std::size_t& index) {
 		auto& base = m_entities.archetype(entityId, index);
-		detail::Archetype* archetype = addOrFindSubset<Ty>(base);
+		detail::Archetype* archetype = addOrFindSubset<std::remove_volatile_t<std::remove_reference_t<Ty>>>(base);
 
-		archetype->insertEntityFromSuper<Ty>(entityId, *std::exchange(base, archetype));
+		archetype->insertEntityFromSuper<std::remove_volatile_t<std::remove_reference_t<Ty>>>(entityId, *std::exchange(base, archetype));
 	}
 
 	template <class Ty> bool containsComponent(object_id entityId, std::size_t& index) const {
@@ -59,8 +59,8 @@ public:
 
 	// systems functions
 
-	template <class... Types> System<Types...> insertSystem() {
-		return System<Types...>(m_systems.insert<Types...>(), &m_archetypes);
+	template <class Callable, class... Types> System<Types...> insertSystem(Callable&& callable) {
+		return System<Types...>(m_systems.insert<Types...>(std::forward<Callable>(callable)), &m_archetypes);
 	}
 	void eraseSystem(object_id systemId);
 

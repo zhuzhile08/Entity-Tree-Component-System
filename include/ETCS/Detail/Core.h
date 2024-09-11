@@ -48,6 +48,7 @@ public:\
 #else
 
 #include <LSD/UniquePointer.h>
+#include <LSD/Array.h>
 #include <LSD/Vector.h>
 #include <LSD/Hash.h>
 #include <LSD/String.h>
@@ -73,6 +74,8 @@ template <class Ty, class Deleter = std::default_delete<Ty>> using unique_ptr_t 
 
 template <class Ty, class... Args> using function_t = std::function<Ty(Args...)>;
 
+template <class Ty, std::size_t Size> using array_t = std::array<Ty, Size>;
+
 template <class Ty, class Alloc> using vector_t = std::vector<Ty, Alloc>;
 
 template <class CharTy, class Traits = std::char_traits<CharTy>, class Alloc = std::allocator<CharTy>> using basic_string_t = std::basic_string<CharTy, Traits, Alloc>;
@@ -85,6 +88,8 @@ template <class Ty> using hash_t = lsd::Hash<Ty>;
 template <class Ty, class Deleter = lsd::DefaultDelete<Ty>> using unique_ptr_t = lsd::UniquePointer<Ty, Deleter>;
 
 template <class Ty, class... Args> using function_t = lsd::Function<Ty(Args...)>;
+
+template <class Ty, std::size_t Size> using array_t = lsd::Array<Ty, Size>;
 
 template <class Ty, class Alloc = std::allocator<Ty>> using vector_t = lsd::Vector<Ty, Alloc>;
 
