@@ -13,7 +13,7 @@
 
 #include "Detail/Core.h"
 
-#include "Detail/Archetype.h"
+#include "Detail/ArchetypeManager.h"
 #include "Detail/EntityManager.h"
 
 namespace etcs {
@@ -42,7 +42,7 @@ public:
 	[[nodiscard]] object_id entityId() const {
 		return m_id;
 	}
-	[[nodiscard]] bool alive() const {
+	[[nodiscard]] bool valid() const {
 		return m_entities->contains(m_id);
 	}
 
@@ -54,7 +54,7 @@ private:
 
 	constexpr ComponentView(object_id id, std::size_t index, detail::EntityManager* entities) : m_id(id), m_index(index), m_entities(entities) { }
 
-	friend class World;
+	friend class detail::WorldData;
 	friend class Entity;
 };
 
