@@ -11,7 +11,13 @@
 
 #pragma once
 
+#include <cstdint>
+
 #ifdef USE_STANDARD_LIBRARY
+
+#include <memory>
+#include <vector>
+#include <functional>
 
 #define CUSTOM_HASHER(name, type, hashType, hasher, toHashType)\
 class name {\
@@ -41,10 +47,6 @@ public:\
 	}\
 };
 
-#include <memory>
-#include <vector>
-#include <functional>
-
 #else
 
 #include <LSD/UniquePointer.h>
@@ -57,7 +59,14 @@ public:\
 
 #endif
 
-#include <cstdint>
+
+#define ETCS_DEFAULT_CONSTRUCTORS(className, modifiers)\
+modifiers className() = default;\
+modifiers className(const className&) = default;\
+modifiers className(className&&) = default;\
+modifiers className& operator=(const className&) = default;\
+modifiers className& operator=(className&&) = default;
+
 
 namespace etcs {
 
@@ -106,8 +115,12 @@ using string_view_t = basic_string_view_t<char>;
 
 class Entity;
 class BasicSystem;
-template <class...> class System;
 class World;
+
+class EntityRange;
+class RangeIterator;
+template <class, class...> class EntityQuery;
+template <class, class...> class QueryIterator;
 
 #ifdef USE_COMPONENTS_EXT
 
@@ -120,9 +133,12 @@ namespace detail {
 class Archetype;
 class ArchetypeManager;
 class EntityManager;
-class SystemManager;
 
-extern World* globalWorld;
+class BasicEntityQuery;
+class BasicQueryIterator;
+
+class WorldManager;
+class WorldData;
 
 } // namespace detail
 
@@ -130,20 +146,5 @@ extern World* globalWorld;
 // utility
 
 inline static constexpr auto nullId = std::numeric_limits<object_id>::max();
-
-namespace detail {
-
-// entity view
-struct EntityView {
-	object_id id = nullId;
-	string_view_t name = { };
-};
-
-// custom hashers and equal functions
-
-CUSTOM_HASHER(EVHasher, const EntityView&, string_view_t, hash_t<string_view_t>{}, .name)
-CUSTOM_EQUAL(EVEqual, const EntityView&, string_view_t, .name)
-
-} // namespace detail
 
 } // namespace etcs
