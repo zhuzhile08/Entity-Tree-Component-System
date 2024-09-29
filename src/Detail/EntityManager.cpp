@@ -1,6 +1,6 @@
 #include "../../include/ETCS/Detail/EntityManager.h"
 
-#include "../../include/ETCS/World.h"
+#include "../../include/ETCS/Detail/WorldData.h"
 #include "../../include/ETCS/Entity.h"
 
 #include <stdexcept>
@@ -11,7 +11,7 @@ namespace detail {
 
 object_id EntityManager::uniqueId() {
 	if (m_unused.empty()) {
-		if (m_lookup.size() == nullId) throw std::runtime_error("etcs::detail::EntityManager::uniqueId(): Current entity count exceeded max entity count!");
+		if (m_lookup.size() == std::numeric_limits<std::size_t>::max()) throw std::runtime_error("etcs::detail::EntityManager::uniqueId(): Current entity count exceeded max entity count!");
 		else return m_lookup.size();
 	} else {
 		auto id = m_unused.back();
@@ -114,6 +114,13 @@ const Archetype* EntityManager::archetype(object_id id, std::size_t& index) cons
 
 Entity EntityManager::find(object_id entityId) const {
 	if (auto it = m_lookup.find(entityId); it != m_lookup.end()) return Entity(it->first.m_id, it - m_lookup.begin(), m_world);
+	else throw std::out_of_range("etcs::detail::EntityManager::data(): Entity ID did not exist!");
+
+	return Entity(nullId, std::numeric_limits<std::size_t>::max(), nullptr);
+}
+
+Entity EntityManager::at(std::size_t index) const {
+	if (index < m_lookup.size()) return Entity((m_lookup.begin() + index)->first.m_id, index, m_world);
 	else throw std::out_of_range("etcs::detail::EntityManager::data(): Entity ID did not exist!");
 
 	return Entity(nullId, std::numeric_limits<std::size_t>::max(), nullptr);
