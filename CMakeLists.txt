@@ -44,12 +44,12 @@ set (ETCS_PRECOMPILED_HEADERS
 )
 
 set (ETCS_SOURCE_FILES
-	"src/ETCS.cpp"
 	"src/World.cpp"
 	"src/Entity.cpp"
-	"src/Detail/Archetype.cpp"
+	"src/EntityRange.cpp"
+	"src/EntityQuery.cpp"
+	"src/Detail/ArchetypeManager.cpp"
 	"src/Detail/EntityManager.cpp"
-	"src/Detail/SystemManager.cpp"
 	"src/Components/Transform.cpp"
 )
 
