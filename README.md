@@ -7,12 +7,13 @@ ETCS (Entity-Tree-Component-System) is a small, simple and fast-ish Archetype-EC
 ### Features and design choices
 
 - All exposed entities (`etcs::Entity`) are in reality entity "views", and the real entity data is packed in an dense array
-- Entities support hierarcies and lookups by default
+- Worlds can always be created are stored in an hidden global world manager and can be accessed through the handle `etcs::World`
+- A default world is created during `etcs::init()` and all worlds are destroyed when `etcs::quit()` is called
+- Entities support parent-child hierarcies and lookups by default
 - Cache-friendly component storage due to the archetype implementation
 - Simple-to-understand and small codebase
-- One global `etcs::World` which may be created using `etcs::init()` and destroyed using `etcs::quit()` for basic usage, more can be created when required
 
-ETCS is still quite basic right now, so it doesn't support more advanced features like tags, thread safety and advanced queries.
+ETCS is still quite basic right now, so it doesn't fully support more advanced features like tags, thread safety and advanced queries.
 
 ### Example
 
@@ -33,29 +34,28 @@ public:
 int main() {
     etcs::init();
 
-    auto root = etcs::insertEntity();
+	auto world = etcs::world();
 
+    auto root = world.insertEntity();
 
     for (etcs::object_id i = 0; i < 1024; i++) {
         auto e = root.insertChild(std::to_string(i)); // use lsd::toString if you have it as a dependency
         
-        if (i % 1 == 0) e.insertComponent<Position>(
-		    Position { static_cast<double>(i), static_cast<double>(i) / 2}
+        if (i % 1 == 0) e.insertComponent<Position>(  // first API style: entity centric
+			Position { static_cast<double>(i), static_cast<double>(i) / 2}
 		);
-        if (i % 2 == 0) e.insertComponent<Velocity>(
-		    Velocity { static_cast<double>(i * i), static_cast<double>(i) / 3}
+        if (i % 2 == 0) world.insertComponent<Velocity>( // second API style: world centric
+			e, Velocity { static_cast<double>(i * i), static_cast<double>(i) / 3}
 		);
         if (i % 3 == 0) e.disable();
     }
 
-
-    auto system = etcs::insertSystem<const Velocity, Position>();
-    system.each([](etcs::Entity e, const Velocity& v, Position p){
-        p.x += v.x;
+	for (auto [e, v, p] : world.query<etcs::Entity, const Velocity, Position>()) {
+		p.x += v.x;
         p.y += v.y;
 
         std::printf("Hello, Entity number %s at position (%.0f, %.0f)!\n", e.name().data(), p.x, p.y);
-    });
+	}
 
     etcs::quit();
 }
