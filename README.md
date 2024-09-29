@@ -34,7 +34,7 @@ public:
 int main() {
     etcs::init();
 
-	auto world = etcs::world();
+    auto world = etcs::world();
 
     auto root = world.insertEntity();
 
@@ -42,20 +42,20 @@ int main() {
         auto e = root.insertChild(std::to_string(i)); // use lsd::toString if you have it as a dependency
         
         if (i % 1 == 0) e.insertComponent<Position>(  // first API style: entity centric
-			Position { static_cast<double>(i), static_cast<double>(i) / 2}
-		);
+            Position { static_cast<double>(i), static_cast<double>(i) / 2}
+        );
         if (i % 2 == 0) world.insertComponent<Velocity>( // second API style: world centric
-			e, Velocity { static_cast<double>(i * i), static_cast<double>(i) / 3}
-		);
+            e, Velocity { static_cast<double>(i * i), static_cast<double>(i) / 3}
+        );
         if (i % 3 == 0) e.disable();
     }
 
-	for (auto [e, v, p] : world.query<etcs::Entity, const Velocity, Position>()) {
-		p.x += v.x;
+    for (auto [e, v, p] : world.query<etcs::Entity, const Velocity, Position>()) {
+        p.x += v.x;
         p.y += v.y;
 
         std::printf("Hello, Entity number %s at position (%.0f, %.0f)!\n", e.name().data(), p.x, p.y);
-	}
+    }
 
     etcs::quit();
 }
