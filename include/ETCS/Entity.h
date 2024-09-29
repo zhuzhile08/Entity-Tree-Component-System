@@ -12,9 +12,9 @@
 #pragma once
 
 #include "Detail/Core.h"
+#include "Detail/WorldData.h"
 
 #include "Component.h"
-#include "World.h"
 
 #include <LSD/UnorderedSparseSet.h>
  
@@ -26,13 +26,9 @@ private:
 	using const_iterator = lsd::UnorderedSparseSet<detail::EntityView, detail::EVHasher, detail::EVEqual>::const_iterator;
 
 public:
-	constexpr Entity() = default;
-	constexpr Entity(const detail::EntityView& view, Entity& parent) : m_id(view.id), m_world(parent.m_world) { }
-	constexpr Entity(const Entity&) = default;
-	constexpr Entity(Entity&&) = default;
+	ETCS_DEFAULT_CONSTRUCTORS(Entity, constexpr)
 
-	constexpr Entity& operator=(const Entity&) = default;
-	constexpr Entity& operator=(Entity&&) = default;
+	constexpr Entity(const detail::EntityView& view, Entity& parent) : m_id(view.id), m_world(parent.m_world) { }
 
 	void destroy() noexcept;
 	
@@ -102,26 +98,27 @@ public:
 	[[nodiscard]] std::size_t size() const;
 	[[nodiscard]] string_view_t name() const;
 	[[nodiscard]] Entity parent() const;
+	[[nodiscard]] World world();
 	[[nodiscard]] constexpr object_id id() const noexcept { 
 		return m_id;
 	}
-	[[nodiscard]] constexpr World* world() const noexcept {	
-		return m_world;
-	}
-	[[nodiscard]] constexpr const World* world() noexcept {
-		return m_world;
+
+	friend constexpr bool operator==(const Entity& first, const Entity& second) noexcept {
+		return first.m_id == second.m_id;
 	}
 
 private:
 	object_id m_id = nullId;
 	mutable std::size_t m_index = -1; // only for caching the current index
 
-	World* m_world = nullptr;
+	detail::WorldData* m_world = nullptr;
 
-	constexpr Entity(object_id id, std::size_t index, World* world = detail::globalWorld) : m_id(id), m_index(index), m_world(world) { }
+	constexpr Entity(object_id id, std::size_t index, detail::WorldData* world) : m_id(id), m_index(index), m_world(world) { }
 
 	friend class detail::EntityManager;
-	friend class detail::Archetype;
+	friend class detail::BasicQueryIterator;
+	friend class World;
+	friend class EntityIterator;
 };
 
 } // namespace etcs

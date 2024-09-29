@@ -1,43 +1,76 @@
 #include "../include/ETCS/World.h"
 
-#include "../include/ETCS/Entity.h"
+#include <LSD/UnorderedSparseSet.h>
+
+#include "../include/ETCS/Detail/WorldData.h"
 
 namespace etcs {
 
 namespace detail {
 
-World* globalWorld = nullptr;
+class WorldManager {
+public:
+	WorldManager() {
+		m_worlds.emplace(new WorldData({ }));
+	}
+
+	World world(string_view_t name) const {
+		return World(m_worlds.at(name).get());
+	}
+
+	World insert(string_view_t name) {
+		if (m_worlds.contains(name)) return World(m_worlds.at(name).get());
+		else return World((*m_worlds.emplace(new WorldData(name)).first).get());
+	}
+
+	void erase(string_view_t name) {
+		if (name == string_view_t { }) throw std::logic_error("etcs::eraseWorld(): Can't erase a world with an empty name, which is the default world!");
+		else m_worlds.erase(name);
+	}
+
+	bool contains(string_view_t name) const {
+		return m_worlds.contains(name);
+	}
+
+private:
+	lsd::UnorderedSparseSet<unique_ptr_t<WorldData>, WorldData::Hasher, WorldData::Equal> m_worlds;
+};
+
+static WorldManager* globalWorldManager;
 
 } // namespace detail
 
-
-Entity World::insertEntity(string_view_t name) {
-	return m_entities.insert(name);
-}
-Entity World::insertEntity(string_view_t name, Entity parent) {
-	return m_entities.insert(name, parent.id());
-}
-void World::eraseEntity(object_id entityId) {
-	m_entities.erase(entityId);
-}
-void World::clearEntity(object_id entityId) {
-	m_entities.clear(entityId);
+void init() {
+	if (detail::globalWorldManager) throw std::logic_error("etcs::init(): The ETCS library is already initialized!");
+	else detail::globalWorldManager = new detail::WorldManager();
 }
 
-bool World::containsEntity(object_id entityId) const {
-	return m_entities.contains(entityId);
+void quit() {
+	if (detail::globalWorldManager) delete detail::globalWorldManager;
 }
 
-detail::EntityData& World::entityData(object_id entityId, std::size_t& index) {
-	return m_entities.data(entityId, index);
+World world(string_view_t name) {
+	return detail::globalWorldManager->world(name);
 }
 
-const detail::EntityData& World::entityData(object_id entityId, std::size_t& index) const {
-	return m_entities.data(entityId, index);
+World insertWorld(string_view_t name) {
+	return detail::globalWorldManager->insert(name);
 }
 
-void World::eraseSystem(object_id systemId) {
-	m_systems.erase(systemId);
+void eraseWorld(string_view_t name) {
+	detail::globalWorldManager->erase(name);
+}
+
+void eraseWorld(World world) {
+	detail::globalWorldManager->erase(world.name());
+}
+
+bool containsWorld(string_view_t name) {
+	return detail::globalWorldManager->contains(name);
+}
+
+bool containsWorld(World world) {
+	return detail::globalWorldManager->contains(world.name());
 }
 
 } // namespace etcs

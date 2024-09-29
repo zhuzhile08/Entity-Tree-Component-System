@@ -1,5 +1,5 @@
 /*************************
- * @file Archetype.h
+ * @file ArchetypeManager.h
  * @author Zhile Zhu (zhuzhile08@gmail.com)
  * 
  * @brief ECS archetype and component memory allocator
@@ -16,8 +16,6 @@
 #include <LSD/UnorderedSparseSet.h>
 
 #include "Core.h"
-
-#include <tuple>
 
 namespace etcs {
 
@@ -220,25 +218,6 @@ public:
 		return m_edges[lsd::typeId<Ty>()];
 	}
 
-	template <class EntityType, class... Types, class Callable> void each(World* world, Callable&& system) {
-		for (auto& edge : m_edges) {
-			auto superset = edge.second.superset;
-			if (superset) superset->each<EntityType, Types...>(world, system);
-		}
-
-		auto iterators = std::make_tuple((m_components.at(lsd::typeId<std::remove_cv_t<std::remove_reference_t<Types>>>()).template begin<Types>())...);
-
-		if constexpr (std::is_invocable_v<Callable, EntityType, Types...>) {
-			for (auto id : m_entities) {
-				auto e = EntityType(id, world);
-				if (e.active()) system(e, (*std::get<Types*>(iterators)++)...);
-			}
-		} else {
-			for (auto id : m_entities)
-				if (EntityType(id, 0, world).active()) system((*std::get<Types*>(iterators)++)...);
-		}
-	}
-
 private:
 	components m_components;
 	entities m_entities;
@@ -294,16 +273,18 @@ private:
 	friend class Equal;
 	friend class EntityManager;
 	friend class ArchetypeManager;
+	friend class detail::BasicEntityQuery;
+	friend class detail::BasicQueryIterator;
 };
 
 
 class ArchetypeManager {
 public:
-	using archetype = unique_ptr_t<Archetype>;
-	using archetypes = lsd::UnorderedSparseSet<archetype, Archetype::Hasher, Archetype::Equal>;
+	using archetype_handle = unique_ptr_t<Archetype>;
+	using archetypes = lsd::UnorderedSparseSet<archetype_handle, Archetype::Hasher, Archetype::Equal>;
 
-	ArchetypeManager(World* world) : m_world(world) {
-		m_archetypes.emplace(archetype::create()); 
+	ArchetypeManager() {
+		m_archetypes.emplace(archetype_handle::create()); 
 	}
 
 	template <class Ty> [[nodiscard]] Archetype* addOrFindSuperset(Archetype* baseArchetype) {
@@ -317,7 +298,7 @@ public:
 			if (it != m_archetypes.end())
 				archetype = it->get();
 			else
-				archetype = m_archetypes.emplace(archetype::create(Archetype::createSuper<Ty>(*baseArchetype, hash))).first->get();
+				archetype = m_archetypes.emplace(archetype_handle::create(Archetype::createSuper<Ty>(*baseArchetype, hash))).first->get();
 			
 			edge.superset = archetype;
 		}
@@ -335,7 +316,7 @@ public:
 			if (it != m_archetypes.end())
 				archetype = it->get();
 			else
-				archetype = m_archetypes.emplace(archetype::create(Archetype::createSuper<Ty>(*baseArchetype, hash))).first->get();
+				archetype = m_archetypes.emplace(archetype_handle::create(Archetype::createSuper<Ty>(*baseArchetype, hash))).first->get();
 			
 			edge.subset = archetype;
 		}
@@ -343,18 +324,14 @@ public:
 		return archetype;
 	}
 
-	[[nodiscard]] Archetype* systemArchetype(object_id systemId);
+	[[nodiscard]] Archetype* archetype(std::size_t hash);
 
 	[[nodiscard]] Archetype* defaultArchetype() {
 		return m_archetypes.front().get();
 	}
-	[[nodiscard]] constexpr World* world() {
-		return m_world;
-	}
 
 private:
 	archetypes m_archetypes;
-	World* m_world;
 };
 
 } // namespace detail

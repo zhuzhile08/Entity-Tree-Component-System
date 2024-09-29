@@ -15,10 +15,21 @@
 #include <LSD/UnorderedSparseMap.h>
 
 #include "Core.h"
- 
+
 namespace etcs {
 
 namespace detail {
+
+// entity view
+
+struct EntityView {
+	object_id id = nullId;
+	string_view_t name = { };
+};
+
+CUSTOM_HASHER(EVHasher, const EntityView&, string_view_t, hash_t<string_view_t>{}, .name)
+CUSTOM_EQUAL(EVEqual, const EntityView&, string_view_t, .name)
+
 
 // Core entity data
 class EntityData {
@@ -30,13 +41,14 @@ public:
 
 private:
 	object_id m_id;
-	EntityView m_parent = { };
+	EntityView m_parent;
 
 	string_t m_name;
-	lsd::UnorderedSparseSet<EntityView, EVHasher, EVEqual> m_children { };
+	lsd::UnorderedSparseSet<EntityView, EVHasher, EVEqual> m_children;
 
 	bool m_active = true;
 
+	friend class BasicQueryIterator;
 	friend class EntityManager;
 	friend class ::etcs::World;
 	friend class ::etcs::Entity;
@@ -50,7 +62,7 @@ private:
 	CUSTOM_EQUAL(Equal, const EntityData&, object_id, .m_id)
 
 public:
-	constexpr EntityManager(World* world) noexcept : m_world(world) { }
+	constexpr EntityManager(WorldData* world) noexcept : m_world(world) { }
 
 	[[nodiscard]] Entity insert(string_view_t name);
 	[[nodiscard]] Entity insert(string_view_t name, object_id parentId);
@@ -67,16 +79,17 @@ public:
 	[[nodiscard]] const Archetype* archetype(object_id id, std::size_t& index) const;
 
 	[[nodiscard]] Entity find(object_id entityId) const;
+	[[nodiscard]] Entity at(std::size_t index) const;
 
-	[[nodiscard]] World* world() {
-		return m_world;
+	[[nodiscard]] std::size_t size() {
+		return m_lookup.size();
 	}
 
 private:
 	lsd::UnorderedSparseMap<EntityData, Archetype*, Hasher, Equal> m_lookup;
 	vector_t<object_id> m_unused;
 
-	World* m_world;
+	WorldData* m_world;
 
 	object_id uniqueId();
 };

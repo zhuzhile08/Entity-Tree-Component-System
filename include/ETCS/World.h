@@ -2,10 +2,9 @@
  * @file World.h
  * @author Zhile Zhu (zhuzhile08@gmail.com)
  * 
- * @brief Includes all headers of the world class
+ * @brief World wrapper and manager functions to allow for a functional interface
  * 
- * @date 2024-05-19
- * 
+ * @date 2024-09-24
  * @copyright Copyright (c) 2024
  *************************/
 
@@ -14,71 +13,98 @@
 #include <LSD/UnorderedSparseSet.h>
 
 #include "Detail/Core.h"
-#include "Detail/Archetype.h"
-#include "Detail/EntityManager.h"
-#include "Detail/SystemManager.h"
-#include "System.h"
+#include "Detail/WorldData.h"
+
+#include "Entity.h"
+#include "EntityQuery.h"
+#include "EntityRange.h"
 #include "Component.h"
 
 namespace etcs {
 
+void init();
+void quit();
+
+World world(string_view_t name = { });
+World insertWorld(string_view_t name);
+
+void eraseWorld(string_view_t name);
+void eraseWorld(World world);
+
+bool containsWorld(string_view_t name);
+bool containsWorld(World world);
+
 class World {
 public:
-	World() : m_archetypes(this), m_entities(this), m_systems(&this->m_archetypes) { }
+	ETCS_DEFAULT_CONSTRUCTORS(World, constexpr)
 
 	// entity functions
 
-	Entity insertEntity(string_view_t name = "");
-	Entity insertEntity(string_view_t name, Entity parent);
-	void eraseEntity(object_id entityId);
-	void clearEntity(object_id entityId);
+	Entity insertEntity(string_view_t name = "") {
+		return m_data->m_entities.insert(name);
+	}
+	Entity insertEntity(string_view_t name, const Entity& parent) {
+		return m_data->m_entities.insert(name, parent.m_id);
+	}
+	void eraseEntity(const Entity& entity) {
+		m_data->m_entities.erase(entity.m_id);
+	}
+	void clearEntity(const Entity& entity) {
+		m_data->m_entities.clear(entity.m_id);
+	}
 
-	bool containsEntity(object_id entityId) const;
+	bool containsEntity(const Entity& entity) {
+		return m_data->m_entities.contains(entity.m_id);
+	}
+
 
 	// component functions
 
-	template <class Ty, class... Args> ComponentView<std::remove_volatile_t<std::remove_reference_t<Ty>>> insertComponent(object_id entityId, std::size_t& index, Args&&... args) {
-		auto& base = m_entities.archetype(entityId, index);
-
-		auto archetype = m_archetypes.addOrFindSuperset<Ty>(base);
-		archetype->template insertEntityFromSub<std::remove_volatile_t<std::remove_reference_t<Ty>>>(entityId, *std::exchange(base, archetype), std::forward<Args>(args)...);
-
-		return ComponentView<std::remove_volatile_t<std::remove_reference_t<Ty>>>(entityId, index, &m_entities);
+	template <class Ty, class... Args> ComponentView<Ty> insertComponent(const Entity& entity, Args&&... args) {
+		return m_data->insertComponent<Ty>(entity.m_id, entity.m_index, std::forward<Args>(args)...);
 	}
-	template <class Ty> void eraseComponent(object_id entityId, std::size_t& index) {
-		auto& base = m_entities.archetype(entityId, index);
-		detail::Archetype* archetype = addOrFindSubset<std::remove_volatile_t<std::remove_reference_t<Ty>>>(base);
-
-		archetype->insertEntityFromSuper<std::remove_volatile_t<std::remove_reference_t<Ty>>>(entityId, *std::exchange(base, archetype));
+	template <class Ty> void eraseComponent(const Entity& entity) {
+		m_data->eraseComponent<Ty>(entity.m_id, entity.m_index);
 	}
 
-	template <class Ty> bool containsComponent(object_id entityId, std::size_t& index) const {
-		return m_entities.archetype(entityId, index)->contains<Ty>();
+	template <class Ty> bool containsComponent(const Entity& entity) const {
+		return m_data->containsComponent<Ty>(entity.m_id, entity.m_index);
 	}
 
 
-	// systems functions
+	// iteration
 
-	template <class Callable, class... Types> System<Types...> insertSystem(Callable&& callable) {
-		return System<Types...>(m_systems.insert<Types...>(std::forward<Callable>(callable)), &m_archetypes);
+	EntityRange entities() {
+		return EntityRange(m_data);
 	}
-	void eraseSystem(object_id systemId);
+	template <class... Types> EntityQuery<Types...> query() {
+		return EntityQuery<Types...>(m_data);
+	}
+
+	
+	// world functions
+
+	bool alive() {
+		return containsWorld(m_data->m_name);
+	}
+	void destroy() {
+		eraseWorld(m_data->m_name);
+	}
+
+	[[nodiscard]] string_view_t name() const {
+		return m_data->m_name;
+	}
 
 private:
-	detail::ArchetypeManager m_archetypes;
-	detail::EntityManager m_entities;
-	detail::SystemManager m_systems;
+	detail::WorldData* m_data;
 
+	World(detail::WorldData* data) : m_data(data) { }
 
-	detail::EntityData& entityData(object_id entityId, std::size_t& index);
-	const detail::EntityData& entityData(object_id entityId, std::size_t& index) const;
-
-
-	friend class detail::EntityManager;
-	friend class detail::SystemManager;
-	friend class detail::ArchetypeManager;
+	friend class detail::WorldManager;
+	friend class detail::BasicEntityQuery;
+	friend class detail::BasicQueryIterator;
+	friend class EntityRange;
 	friend class Entity;
-	template <class...> friend class System;
 };
 
 } // namespace etcs

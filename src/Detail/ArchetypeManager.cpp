@@ -1,4 +1,4 @@
-#include "../../include/ETCS/Detail/Archetype.h"
+#include "../../include/ETCS/Detail/ArchetypeManager.h"
 
 #include "../../include/ETCS/World.h"
 
@@ -46,8 +46,8 @@ void Archetype::eraseEntity(object_id entityId) {
 }
 
 
-Archetype* ArchetypeManager::systemArchetype(object_id systemId) {
-	auto archetype = m_archetypes.find(m_world->m_systems.hash(systemId));
+[[nodiscard]] Archetype* ArchetypeManager::archetype(std::size_t hash) {
+	auto archetype = m_archetypes.find(hash);
 
 	if (archetype != m_archetypes.end()) return archetype->get();
 	else return nullptr;
