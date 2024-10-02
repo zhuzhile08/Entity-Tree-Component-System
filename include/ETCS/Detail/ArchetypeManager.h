@@ -316,7 +316,7 @@ public:
 			if (it != m_archetypes.end())
 				archetype = it->get();
 			else
-				archetype = m_archetypes.emplace(archetype_handle::create(Archetype::createSuper<Ty>(*baseArchetype, hash))).first->get();
+				archetype = m_archetypes.emplace(archetype_handle::create(Archetype::createSub<Ty>(*baseArchetype, hash))).first->get();
 			
 			edge.subset = archetype;
 		}
