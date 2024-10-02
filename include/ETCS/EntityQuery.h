@@ -36,10 +36,10 @@ public:
 
 	Entity entity();
 	template <class Ty> Ty& component() {
-		return *(*m_iterator)->m_components.at(lsd::typeId<Ty>()).template component<Ty>((*m_iterator)->m_entities.begin() - m_entityIterator);
+		return *(*m_iterator)->m_components.at(lsd::typeId<Ty>()).template component<Ty>(m_entityIterator - (*m_iterator)->m_entities.begin());
 	}
 	template <class Ty> const Ty& component() const {
-		return *(*m_iterator)->m_components.at(lsd::typeId<Ty>()).template component<Ty>((*m_iterator)->m_entities.begin() - m_entityIterator);
+		return *(*m_iterator)->m_components.at(lsd::typeId<Ty>()).template component<Ty>(m_entityIterator - (*m_iterator)->m_entities.begin());
 	}
 
 	friend constexpr bool operator==(const BasicQueryIterator& first, const BasicQueryIterator& second) noexcept {
@@ -128,7 +128,7 @@ public:
 	value_type operator*() {
 		if constexpr (std::is_same_v<Entity, std::remove_const_t<Type>>) 
 			return value_type { m_iterator.entity(), m_iterator.component<std::remove_const_t<Types>>()... };
-		else return value_type { m_iterator.component<std::remove_const_t<Types>>()... };
+		else return value_type { m_iterator.component<std::remove_const_t<Type>>(), m_iterator.component<std::remove_const_t<Types>>()... };
 	}
 
 	QueryIterator& operator++() {
