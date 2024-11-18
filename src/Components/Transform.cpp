@@ -25,18 +25,22 @@ void Transform::rotate(const glm::vec3& axis, float angle) {
 	m_orientation = glm::rotate(m_orientation, angle, axis);
 	m_dirty = true;
 }
+
 void Transform::rotate(const glm::vec3& euler) {
 	m_orientation = m_orientation * glm::quat(euler);
 	m_dirty = true;
 }
+
 void Transform::setOrientation(const glm::vec3& axis, float angle) {
 	m_orientation = glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), angle, axis);
 	m_dirty = true;
 }
+
 void Transform::setRotation(const glm::vec3& euler) {
 	m_orientation = glm::quat(euler);
 	m_dirty = true;
 }
+
 void Transform::normalizeAndRotate(const glm::vec3& axis, float angle) {
 	m_orientation = glm::rotate(m_orientation, angle, glm::normalize(axis));
 	m_dirty = true;
@@ -63,13 +67,32 @@ void Transform::lookAt(const glm::vec3& target, const glm::vec3& up) {
 		m_orientation = glm::normalize(glm::inverse(glm::quatLookAt(direction, up)));
 }
 
+float Transform::axisRotation(const glm::vec3& axis) const {
+	glm::vec3 similarAxisVector(0.0f);
+
+	if (axis.x > axis.y && axis.x > axis.z && axis.x != 1) similarAxisVector.x = 1.0f;
+	else if ((axis.y > axis.z && axis.y != 1) || axis.z == 1) similarAxisVector.y = 1.0f;
+	else similarAxisVector.z = 1.0f;
+
+	glm::vec3 orthonormal = glm::normalize(glm::cross(axis, similarAxisVector));
+
+	auto transformed = glm::rotate(glm::inverse(m_orientation), orthonormal);
+	auto flattened = glm::normalize(transformed - glm::dot(transformed, axis) * axis);
+
+	auto result = glm::acos(glm::dot(orthonormal, flattened));
+
+	if (glm::dot(glm::cross(orthonormal, flattened), axis) < 0) return result;
+	else return result * -1;
+}
 
 glm::vec3 Transform::forward() const {
 	return glm::normalize(glm::rotate(glm::inverse(m_orientation), { 0.0f, 0.0f, 1.0f }));
 }
+
 glm::vec3 Transform::left() const {
 	return glm::normalize(glm::rotate(glm::inverse(m_orientation), { 1.0f, 0.0f, 0.0f }));
 }
+
 glm::vec3 Transform::up() const {
 	return glm::normalize(glm::rotate(glm::inverse(m_orientation), { 0.0f, 1.0f, 0.0f }));
 }
@@ -79,6 +102,7 @@ glm::vec3& Transform::localTranslation() {
 	m_dirty = true;
 	return m_translation;
 }
+
 glm::vec3& Transform::translation() {
 	m_dirty = true;
 	return m_translation;
@@ -88,13 +112,16 @@ glm::quat& Transform::localOrientation() {
 	m_dirty = true;
 	return m_orientation;
 }
+
 glm::quat& Transform::orientation() {
 	m_dirty = true;
 	return m_orientation;
 }
+
 glm::vec3 Transform::localRotation() const {
 	return glm::eulerAngles(m_orientation);
 }
+
 glm::vec3 Transform::rotation() const {
 	return glm::eulerAngles(m_orientation);
 }
@@ -103,6 +130,7 @@ glm::vec3& Transform::localScale() {
 	m_dirty = true;
 	return m_scale;
 }
+
 glm::vec3& Transform::scale() {
 	m_dirty = true;
 	return m_scale;
@@ -115,6 +143,7 @@ glm::mat4 Transform::localTransform() {
 	}
 	return m_localTransform;
 }
+
 glm::mat4 Transform::transform() {
 	if (m_dirty) {
 		m_localTransform = glm::scale(glm::translate(glm::toMat4((m_orientation = glm::normalize(m_orientation))), m_translation), m_scale);
@@ -131,10 +160,12 @@ glm::vec3 Transform::globalTranslation(const Entity& entity) const {
 		return glm::rotate(m_orientation, m_translation) + parentTransform.globalTranslation(parent.parent());
 	else return glm::rotate(m_orientation, m_translation);
 }
+
 glm::quat Transform::globalOrientation(const Entity& entity) const {
 	auto parent = entity.parent();
 	return m_orientation * (parent.alive() ? parent.component<Transform>().get().m_orientation : glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 }
+
 glm::vec3 Transform::globalRotation(const Entity& entity) const {
 	return glm::eulerAngles(globalOrientation(entity));
 }
@@ -143,6 +174,7 @@ glm::vec3 Transform::globalScale(const Entity& entity) const {
 	auto parent = entity.parent();
 	return m_orientation * (parent.alive() ? parent.component<Transform>().get().globalScale(parent.parent()) : glm::vec3(0.0f));
 }
+
 glm::mat4 Transform::globalTransform(const Entity& entity) {
 	auto parent = entity.parent();
 	return localTransform() * (parent.alive() ? parent.component<Transform>().get().globalTransform(parent.parent()) : glm::mat4(1.0f));
