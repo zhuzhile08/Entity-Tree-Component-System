@@ -43,14 +43,14 @@ public:
 		return m_id;
 	}
 	[[nodiscard]] bool valid() const {
-		return m_entities->contains(m_id);
+		return m_entities && m_entities->contains(m_id);
 	}
 
 private:
-	object_id m_id;
-	std::size_t m_index;
+	object_id m_id { };
+	std::size_t m_index { };
 
-	detail::EntityManager* m_entities;
+	detail::EntityManager* m_entities { };
 
 	constexpr ComponentView(object_id id, std::size_t index, detail::EntityManager* entities) : m_id(id), m_index(index), m_entities(entities) { }
 
