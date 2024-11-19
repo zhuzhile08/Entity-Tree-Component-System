@@ -50,6 +50,9 @@ public:
 	void scale(const glm::vec3& scale);
 
 
+	float axisRotation(const glm::vec3& axis) const;
+
+
 	[[nodiscard]] glm::vec3 forward() const;
 	[[nodiscard]] glm::vec3 left() const;
 	[[nodiscard]] glm::vec3 up() const;
