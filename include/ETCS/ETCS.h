@@ -16,6 +16,7 @@
 #include "Entity.h"
 #include "Component.h"
 #include "World.h"
+#include "Prefab.h"
 #include "EntityQuery.h"
 #include "EntityRange.h"
 #include "Components/Transform.h"
