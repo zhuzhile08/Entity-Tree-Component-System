@@ -31,7 +31,7 @@ private:
 
 			virtual bool emptyComponent() const noexcept = 0;
 
-			virtual void* emplace_back(void*) = 0;
+			virtual void* emplaceBack(void*) = 0;
 			virtual void eraseComponent(std::size_t) = 0;
 
 			virtual void* componentData(std::size_t) = 0;
@@ -53,7 +53,7 @@ private:
 				return std::is_empty_v<value_type>;
 			}
 
-			void* emplace_back(void* data) override {
+			void* emplaceBack(void* data) override {
 				if constexpr (std::is_empty_v<value_type>) return &m_memory;
 				else return &m_memory.emplace_back(std::move(*static_cast<Ty*>(data)));
 			}
@@ -111,12 +111,12 @@ private:
 			return m_memory->emptyComponent();
 		}
 
-		template <class Ty> void* emplace_back(Ty&& component) {
+		template <class Ty> void* emplaceBack(Ty&& component) {
 			Ty cmp = std::move(component);
-			return m_memory->emplace_back(&cmp);
+			return m_memory->emplaceBack(&cmp);
 		}
 		void* emplaceBackData(void* component) {
-			return m_memory->emplace_back(component);
+			return m_memory->emplaceBack(component);
 		}
 		void eraseComponent(std::size_t index) {
 			m_memory->eraseComponent(index);
@@ -172,7 +172,7 @@ public:
 	template <class Ty, class... Args> void insertEntityFromSub(object_id entityId, Archetype& subset, Args&&... args) {
 		m_entities.emplace(entityId);
 
-		m_components.at(lsd::typeId<Ty>()).emplace_back(Ty(std::forward<Args>(args)...));
+		m_components.at(lsd::typeId<Ty>()).emplaceBack(Ty(std::forward<Args>(args)...));
 
 		auto entityIndex = (subset.m_entities.find(entityId) - subset.m_entities.begin());
 
@@ -284,7 +284,7 @@ public:
 	using archetypes = lsd::UnorderedSparseSet<archetype_handle, Archetype::Hasher, Archetype::Equal>;
 
 	ArchetypeManager() {
-		m_archetypes.emplace(archetype_handle::create()); 
+		m_archetypes.emplace(archetype_handle::create());
 	}
 
 	template <class Ty> [[nodiscard]] Archetype* addOrFindSuperset(Archetype* baseArchetype) {
