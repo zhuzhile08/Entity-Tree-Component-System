@@ -59,10 +59,10 @@ private:
 
 	BasicEntityQuery* m_query = { };
 
-	BasicQueryIterator(BasicEntityQuery* query, archetype_it iterator, archetype_const_it end, entity_it entityIterator) : 
-		m_iterator(iterator), m_end(end), m_entityIterator(entityIterator), m_query(query) { }
+	BasicQueryIterator(BasicEntityQuery* query, archetype_it iterator, archetype_const_it end, entity_it entityIterator);
 
 	void incrementIterator();
+	void skipInvalid();
 
 	friend class BasicEntityQuery;
 };
