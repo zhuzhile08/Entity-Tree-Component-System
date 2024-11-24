@@ -150,24 +150,62 @@ private:
 		unique_ptr_t<BasicMemory> m_memory;
 	};
 
-	struct Edge { 
-	public:
-		Archetype* superset { };
-		Archetype* subset { };
-	};
-
-	CUSTOM_HASHER(Hasher, const unique_ptr_t<Archetype>&, std::size_t, static_cast<std::size_t>, ->m_hash)
-	CUSTOM_EQUAL(Equal, const unique_ptr_t<Archetype>&, std::size_t, ->m_hash)
-
 	using component_alloc = ComponentAllocator;
 	using components = lsd::UnorderedSparseMap<lsd::type_id, component_alloc>;
 
-	using edges = lsd::UnorderedSparseMap<lsd::type_id, Edge>;
 	using entities = lsd::UnorderedSparseSet<object_id>;
 	
 public:
+	CUSTOM_HASHER(Hasher, const unique_ptr_t<Archetype>&, std::size_t, static_cast<std::size_t>, ->m_hash)
+	CUSTOM_EQUAL(Equal, const unique_ptr_t<Archetype>&, std::size_t, ->m_hash)
+	CUSTOM_HASHER(PtrHasher, const Archetype* const, std::size_t, static_cast<std::size_t>, ->m_hash)
+	CUSTOM_EQUAL(PtrEqual, const Archetype* const, std::size_t, ->m_hash)
+
+
 	constexpr Archetype() = default;
 	constexpr Archetype(Archetype&&) = default;
+
+
+	std::size_t superHash(lsd::type_id typeId);
+	std::size_t subHash(lsd::type_id typeId);
+
+	template <class Ty> Archetype createSuper(std::size_t hash) {
+		Archetype a;
+		a.m_hash = hash;
+
+		{ // insert component in the proper ordered position
+			auto compTypeId = lsd::typeId<Ty>();
+			auto inserted = false;
+			for (const auto& component : m_components) {
+				if (component.first > compTypeId) {
+					inserted = true;
+					a.m_components.emplace(compTypeId, ComponentAllocator::create<Ty>());
+				}
+
+				a.m_components.emplace(component.first, component.second);
+			}
+
+			if (!inserted) a.m_components.emplace(compTypeId, ComponentAllocator::create<Ty>());
+		}
+
+		return a;
+	}
+	template <class Ty> Archetype createSub(std::size_t hash) {
+		assert(!m_components.empty() && "etcs::Archetype::createSub(): Cannot create subset archetype of empty archetype!");
+
+		Archetype a;
+		a.m_hash = hash;
+
+		{ // insert component in the proper ordered position
+			auto compTypeId = lsd::typeId<Ty>();
+			for (const auto& component : m_components)
+				if (component.first != compTypeId) // insert component if it is not of type Ty
+					a.m_components.emplace(component.first, component.second);
+		}
+
+		return a;
+	}
+
 
 	template <class Ty, class... Args> void insertEntityFromSub(object_id entityId, Archetype& subset, Args&&... args) {
 		m_entities.emplace(entityId);
@@ -198,81 +236,33 @@ public:
 		superset.eraseEntity(entityId);
 	}
 
+	void insertEntity(object_id entityId);
 	void eraseEntity(object_id entityId);
 
-	template <class Ty> Ty& component(object_id entityId) {
+	template <class Ty> [[nodiscard]] Ty& component(object_id entityId) {
 		return *m_components.at(lsd::typeId<Ty>()).template component<Ty>(m_entities.find(entityId) - m_entities.begin());
 	}
-	template <class Ty> const Ty& component(object_id entityId) const {
+	template <class Ty> [[nodiscard]] const Ty& component(object_id entityId) const {
 		return *m_components.at(lsd::typeId<Ty>()).template component<Ty>(m_entities.find(entityId) - m_entities.begin());
 	}
 
-	template <class Ty> bool contains() const {
+	template <class Ty> [[nodiscard]] bool contains() const {
 		return m_components.contains(lsd::typeId<Ty>());
 	}
 
-	template <class Ty> const Edge& edge() const {
-		return m_edges.at(lsd::typeId<Ty>());
-	}
-	template <class Ty> Edge& edge() {
-		return m_edges[lsd::typeId<Ty>()];
+	[[nodiscard]] vector_t<lsd::type_id> typeIds() const;
+	[[nodiscard]] std::size_t hash() const noexcept {
+		return m_hash;
 	}
 
 private:
 	components m_components;
 	entities m_entities;
 
-	edges m_edges;
 	std::size_t m_hash = 0;
-
-	static std::size_t superHash(const Archetype& archetype, lsd::type_id typeId);
-	static std::size_t subHash(const Archetype& archetype, lsd::type_id typeId);
-
-	template <class Ty> static Archetype createSuper(Archetype& archetype, std::size_t hash) {
-		Archetype a;
-		a.m_hash = hash;
-
-		{ // insert component in the proper ordered position
-			auto compTypeId = lsd::typeId<Ty>();
-			auto inserted = false;
-			for (const auto& component : archetype.m_components) {
-				if (component.first > compTypeId) {
-					inserted = true;
-					a.m_components.emplace(compTypeId, ComponentAllocator::create<Ty>());
-				}
-
-				a.m_components.emplace(component.first, component.second);
-			}
-
-			if (!inserted) a.m_components.emplace(compTypeId, ComponentAllocator::create<Ty>());
-		}
-
-		a.edge<Ty>().subset = &archetype;
-
-		return a;
-	}
-	template <class Ty> static Archetype createSub(Archetype& archetype, std::size_t hash) {
-		assert(!archetype.m_components.empty() && "etcs::ArchetypeManager::createSub(): Cannot create subset archetype of empty archetype!");
-
-		Archetype a;
-		a.m_hash = hash;
-
-		{ // insert component in the proper ordered position
-			auto compTypeId = lsd::typeId<Ty>();
-			for (const auto& component : archetype.m_components)
-				if (component.first != compTypeId) // insert component if it is not of type Ty
-					a.m_components.emplace(component.first, component.second);
-		}
-
-		a.edge<Ty>().superset = &archetype;
-
-		return a;
-	}
 
 	friend class Hasher;
 	friend class Equal;
-	friend class EntityManager;
-	friend class ArchetypeManager;
 	friend class detail::BasicEntityQuery;
 	friend class detail::BasicQueryIterator;
 };
@@ -281,57 +271,49 @@ private:
 class ArchetypeManager {
 public:
 	using archetype_handle = unique_ptr_t<Archetype>;
-	using archetypes = lsd::UnorderedSparseSet<archetype_handle, Archetype::Hasher, Archetype::Equal>;
+	using archetype_array = lsd::UnorderedSparseSet<archetype_handle, Archetype::Hasher, Archetype::Equal>;
+	using archetype_lookup = lsd::UnorderedSparseMap<lsd::type_id, vector_t<Archetype*>>;
 
-	ArchetypeManager() {
-		m_archetypes.emplace(archetype_handle::create());
-	}
+	ArchetypeManager() { m_archetypes.emplace(archetype_handle::create()); }
 
 	template <class Ty> [[nodiscard]] Archetype* addOrFindSuperset(Archetype* baseArchetype) {
-		auto& edge = baseArchetype->template edge<Ty>();
-		auto archetype = edge.superset;
+		auto hash = baseArchetype->superHash(lsd::typeId<Ty>());
+		auto archetype = m_archetypes.find(hash);
 
-		if (!archetype) {
-			auto hash = Archetype::superHash(*baseArchetype, lsd::typeId<Ty>());
-			auto it = m_archetypes.find(hash);
+		if (archetype == m_archetypes.end()) {
+			archetype = m_archetypes.emplace(archetype_handle::create(baseArchetype->createSuper<Ty>(hash))).first;
 
-			if (it != m_archetypes.end())
-				archetype = it->get();
-			else
-				archetype = m_archetypes.emplace(archetype_handle::create(Archetype::createSuper<Ty>(*baseArchetype, hash))).first->get();
-			
-			edge.superset = archetype;
+			for (auto types = (*archetype)->typeIds(); auto id : types)
+				m_archetypeLookup[id].emplace_back(archetype->get());
 		}
 
-		return archetype;
+		return archetype->get();
 	}
 	template <class Ty> [[nodiscard]] Archetype* addOrFindSubset(Archetype* baseArchetype) {
-		auto& edge = baseArchetype->template edge<Ty>();
-		auto archetype = edge.subset;
+		auto hash = baseArchetype->subHash(lsd::typeId<Ty>());
+		auto archetype = m_archetypes.find(hash);
 
-		if (!archetype) {
-			auto hash = Archetype::subHash(*baseArchetype, lsd::typeId<Ty>());
-			auto it = m_archetypes.find(hash);
+		if (archetype == m_archetypes.end()) {
+			archetype = m_archetypes.emplace(archetype_handle::create(baseArchetype->createSub<Ty>(hash))).first;
 
-			if (it != m_archetypes.end())
-				archetype = it->get();
-			else
-				archetype = m_archetypes.emplace(archetype_handle::create(Archetype::createSub<Ty>(*baseArchetype, hash))).first->get();
-			
-			edge.subset = archetype;
+			for (auto types = (*archetype)->typeIds(); auto id : types)
+				m_archetypeLookup[id].emplace_back(archetype->get());
 		}
 
-		return archetype;
+		return archetype->get();
 	}
 
-	[[nodiscard]] Archetype* archetype(std::size_t hash);
+	void querySupersets(vector_t<Archetype*>& archetypes, vector_t<lsd::type_id> types);
 
-	[[nodiscard]] Archetype* defaultArchetype() {
+	[[nodiscard]] Archetype* baseArchetype() {
 		return m_archetypes.front().get();
 	}
 
 private:
-	archetypes m_archetypes;
+	archetype_array m_archetypes;
+	archetype_lookup m_archetypeLookup;
+
+	[[nodiscard]] static std::size_t generateHash(const vector_t<std::uintptr_t> types);
 };
 
 } // namespace detail

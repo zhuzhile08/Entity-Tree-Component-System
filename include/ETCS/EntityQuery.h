@@ -84,23 +84,9 @@ private:
 	vector_t<Archetype*> m_archetypes;
 	WorldData* m_world = { };
 
-	BasicEntityQuery(WorldData* world, std::size_t typeHash);
+	BasicEntityQuery(WorldData* world, const vector_t<lsd::type_id>& typeIds);
 
 	void loopAndAddArchetype(Archetype* archetype);
-
-	template <class... Types> [[nodiscard]] static std::size_t generateHash() {
-		auto container = array_t<std::uintptr_t, sizeof...(Types)> { reinterpret_cast<std::uintptr_t>(lsd::typeId<Types>())... };
-
-		std::sort(container.begin(), container.end());
-
-		auto hash = container.size();
-
-		for (const auto& component : container) {
-			hash ^= lsd::implicitCast<std::size_t>(component + 0x9e3779b9 + (hash << 6) + (hash >> 2));
-		}
-
-		return hash;
-	}
 
 	template <class, class...> friend class ::etcs::EntityQuery;
 };
@@ -173,9 +159,12 @@ private:
 	detail::BasicEntityQuery m_entityQuery;
 
 	EntityQuery(detail::WorldData* world) requires(!std::is_same_v<Entity, std::remove_const_t<Type>>) : 
-		m_entityQuery(world, detail::BasicEntityQuery::generateHash<std::remove_const_t<Type>, std::remove_const_t<Types>...>()) { }
+		m_entityQuery(world, { 
+			lsd::typeId<std::remove_const_t<Type>>(), 
+			lsd::typeId<std::remove_const_t<Types>>()...
+		}) { }
 	EntityQuery(detail::WorldData* world) requires(std::is_same_v<Entity, std::remove_const_t<Type>>) : 
-		m_entityQuery(world, detail::BasicEntityQuery::generateHash<std::remove_const_t<Types>...>()) { }
+		m_entityQuery(world, { lsd::typeId<std::remove_const_t<Types>>()... }) { }
 
 	friend class World;
 };
