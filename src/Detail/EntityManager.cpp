@@ -21,20 +21,21 @@ object_id EntityManager::uniqueId() {
 }
 
 Entity EntityManager::insert(string_view_t name) {
-	auto archetype = m_world->m_archetypes.defaultArchetype();
+	auto archetype = m_world->m_archetypes.baseArchetype();
 
 	auto res = m_lookup.emplace(EntityData(uniqueId(), name), archetype).first;
-	archetype->m_entities.emplace(res->first.m_id);
+	archetype->insertEntity(res->first.m_id);
 
 	return Entity(res->first.m_id, res - m_lookup.begin(), m_world);
 }
+
 Entity EntityManager::insert(string_view_t name, object_id parentId) {
 	if (auto parent = m_lookup.find(parentId); parent != m_lookup.end()) {
 		if (auto it = parent->first.m_children.find(name); it == parent->first.m_children.end()) {
-			auto archetype = m_world->m_archetypes.defaultArchetype();
+			auto archetype = m_world->m_archetypes.baseArchetype();
 
 			auto eIt = m_lookup.emplace(EntityData(uniqueId(), name, &parent->first), archetype).first;
-			archetype->m_entities.emplace(eIt->first.m_id);
+			archetype->insertEntity(eIt->first.m_id);
 
 			m_lookup.find(parentId)->first.m_children.emplace(EntityView { eIt->first.m_id, eIt->first.m_name }); // find parent again because of memory invalidation
 
@@ -61,7 +62,7 @@ void EntityManager::erase(object_id id) {
 void EntityManager::clear(object_id id) {
 	auto& archetype = m_lookup.at(id);
 	archetype->eraseEntity(id);
-	archetype = m_world->m_archetypes.defaultArchetype();
+	archetype = m_world->m_archetypes.baseArchetype();
 }
 
 detail::EntityData& EntityManager::data(object_id id, std::size_t& index) {
