@@ -35,10 +35,7 @@ void BasicQueryIterator::incrementIterator() {
 void BasicQueryIterator::skipInvalid() {
 	while (
 		m_iterator != m_end && // if the archetype iterator is at the end, don't increment
-		(
-			(*m_iterator)->m_entities.empty() || // if the archetype is empty, don't increment
-			!m_query->world()->m_entities.data((*m_entityIterator), m_entityIndex).m_active // check if the entity is active
-		)
+		!m_query->world()->m_entities.data((*m_entityIterator), m_entityIndex).m_active // check if the entity is active
 	) incrementIterator();
 }
 

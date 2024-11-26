@@ -70,6 +70,8 @@ void ArchetypeManager::querySupersets(vector_t<Archetype*>& archetypes, vector_t
 
 		if (archetypeArray == m_archetypeLookup.end()) return;
 		
+		if (archetypeArray->second.size() == 0) return;
+
 		if (archetypeArray->second.size() < baseArchetypeArray->second.size()) {
 			archetypeLookup.emplace_back(baseArchetypeArray->second.begin(), baseArchetypeArray->second.end());
 
@@ -80,16 +82,18 @@ void ArchetypeManager::querySupersets(vector_t<Archetype*>& archetypes, vector_t
 	archetypes.reserve(baseArchetypeArray->second.size());
 
 	for (auto archetype : baseArchetypeArray->second) {
-		bool found = true;
+		if (!archetype->empty()) {
+			bool found = true;
 
-		for (const auto& lookup : archetypeLookup) {
-			if (!lookup.contains(archetype)) {
-				found = false;
-				break;
+			for (const auto& lookup : archetypeLookup) {
+				if (!lookup.contains(archetype)) {
+					found = false;
+					break;
+				}
 			}
-		}
 
-		if (found) archetypes.push_back(archetype);
+			if (found) archetypes.push_back(archetype);
+		}
 	}
 }
 

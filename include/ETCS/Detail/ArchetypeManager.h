@@ -254,6 +254,9 @@ public:
 	[[nodiscard]] std::size_t hash() const noexcept {
 		return m_hash;
 	}
+	[[nodiscard]] bool empty() const noexcept {
+		return m_entities.empty();
+	}
 
 private:
 	components m_components;
