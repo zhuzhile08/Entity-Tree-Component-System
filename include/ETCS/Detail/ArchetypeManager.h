@@ -59,8 +59,13 @@ private:
 			}
 			void eraseComponent(std::size_t index) override {
 				if constexpr (!std::is_empty_v<value_type>) {
-					m_memory[index] = std::move(m_memory.back());
-					m_memory.popBack();
+					auto component = &m_memory[index];
+					auto alloc = m_memory.get_allocator();
+
+					memory::allocator_traits::destroy(alloc, component); // cursed
+					memory::allocator_traits::construct(alloc, component, std::move(*&*m_memory.rbegin()));
+
+					m_memory.pop_back();
 				}
 			}
 
