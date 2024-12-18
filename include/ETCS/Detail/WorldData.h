@@ -37,7 +37,9 @@ private:
 		if (base->contains<Ty>()) throw std::out_of_range("etcs::detail::WorldData::insertComponent(): A component was requested to be inserted into an entity which already has that component!");
 
 		auto archetype = m_archetypes.addOrFindSuperset<Ty>(base);
-		archetype->template insertEntityFromSub<Ty>(entityId, *std::exchange(base, archetype), std::forward<Args>(args)...);
+		archetype->template insertEntityFromSub<Ty>(entityId, *base, std::forward<Args>(args)...);
+
+		base = archetype;
 
 		return ComponentView<Ty>(entityId, index, &m_entities);
 	}
@@ -46,7 +48,9 @@ private:
 		if (!base->contains<Ty>()) throw std::out_of_range("etcs::detail::WorldData::eraseComponent(): A component was requested to be erased from an entity which doesn't have that component!");
 
 		detail::Archetype* archetype = m_archetypes.addOrFindSubset<Ty>(base);
-		archetype->insertEntityFromSuper<Ty>(entityId, *std::exchange(base, archetype));
+		archetype->insertEntityFromSuper<Ty>(entityId, *base);
+
+		base = archetype;
 	}
 
 	template <class Ty> bool containsComponent(object_id entityId, std::size_t& index) const {
