@@ -27,8 +27,8 @@ struct EntityView {
 	string_view_t name = { };
 };
 
-CUSTOM_HASHER(EVHasher, const EntityView&, string_view_t, hash_t<string_view_t>{}, .name)
-CUSTOM_EQUAL(EVEqual, const EntityView&, string_view_t, .name)
+CUSTOM_HASHER(EVHasher, const EntityView&, const string_view_t&, hash_t<string_view_t>{}, .name)
+CUSTOM_EQUAL(EVEqual, const EntityView&, const string_view_t&, .name)
 
 
 // Core entity data

@@ -25,8 +25,8 @@ class WorldData {
 private:
 	using pointer_type = unique_ptr_t<WorldData>;
 
-	CUSTOM_HASHER(Hasher, const pointer_type&, const string_t&, hash_t<string_t>(), ->m_name)
-	CUSTOM_EQUAL(Equal, const pointer_type&, const string_t&, ->m_name)
+	CUSTOM_HASHER(Hasher, const pointer_type&, const string_view_t&, hash_t<string_view_t>(), ->m_name)
+	CUSTOM_EQUAL(Equal, const pointer_type&, const string_view_t&, ->m_name)
 
 public:
 	WorldData(string_view_t name) : m_archetypes(), m_entities(this), m_name(name) { }
