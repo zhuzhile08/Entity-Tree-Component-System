@@ -130,7 +130,7 @@ Entity Entity::operator[](string_view_t name) const {
 }
 
 bool Entity::alive() const {
-	return m_world->m_entities.contains(m_id);
+	return m_world && m_world->m_entities.contains(m_id);
 }
 bool Entity::active() const {
 	return m_world->m_entities.data(m_id, m_index).m_active;
